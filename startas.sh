@@ -1,6 +1,6 @@
 #!/bin/bash
 
-chmod a+x  kurimas1vm.sh 1.ansiInstall.sh 2.vault.sh 3.vmpackage.sh 4.natovm.sh 5.viliausvm.sh 6.arnovm.sh 7.hostas.sh 8.dockeris.sh 9.playbookai.sh
+chmod a+x  kurimas1vm.sh 1.ansiInstall.sh 2.vault.sh 3.vmpackage.sh 4.natovm.sh 5.viliausvm.sh 6.arnovm.sh 7.hostas.sh 8.dockeris.sh 9.playbookai.sh 
 
 #----------SUDO/SSH PASSAI JUSU VMS--------
 #NATUI |SSH/SUDO/NORMAL PASS -  client    |
@@ -27,7 +27,6 @@ $CSSH_CON 'bash -s' < 7.hostas.sh   # 7.  suranda kur yra KIEKVIENO PRIVATE IP t
 
 $CSSH_CON 'bash -s' < 8.dockeris.sh  # 8.  sukuria kiekvienam dockeri bet cia ignorinkit jis neveikia 
                                      # 8. bet esme ir goalas kdl as visa sita dariau kad dabar galiu visiems hostams rasyti ansible playbookus ir jiems siusti dockeri,t.t
-
 
 $CSSH_CON 'bash -s' < 9.playbookai.sh   # 9. playbookai paleisti visiems failams. KAD gelciau naudotis host failu turi papingint kad vm komunikuoja su vienas kitu
 					# 9. tai reiskia kad man reikia ideti  ANSIBLE VM PUBLIC SSH KEY jums KIEKVIENAM i vmus

@@ -23,4 +23,8 @@ cat > host.yml << "BMW"
           {{ viliaus_private_ip }} ansible_user=viba1062 ansible_ssh_pass=database ansible_become=yes ansible_become_pass=database
           [client]
           {{ nato_private_ip }} ansible_user=naka1314 ansible_ssh_pass=client ansible_become=yes ansible_become_pass=client
+          [all]
+          {{ arno_private_ip }} ansible_user=arba1037 ansible_ssh_pass=webserver ansible_become=yes ansible_become_pass=webserver
+          {{ viliaus_private_ip }} ansible_user=viba1062 ansible_ssh_pass=database ansible_become=yes ansible_become_pass=database
+          {{ nato_private_ip }} ansible_user=naka1314 ansible_ssh_pass=client ansible_become=yes ansible_become_pass=client
 BMW
