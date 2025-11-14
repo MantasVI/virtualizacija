@@ -1,14 +1,20 @@
 #!/bin/bash
-a
+
 cd /home/mavi1016/.ansible
 
+
+ansible-galaxy role install geerlingguy.docker
+
 cat > docker.yml << "DOC"
-- name: instaliuoju visiems dockeri
-  hosts: client,webserver,database
-  become: yes
+- name: Install Docker on all
+  hosts: all
   tasks:
-    - name: docker.io
-      apt:
-        name: docker.io
-        state: present
+    - name: Install docker
+      shell: |
+        apt-get update 
+        apt-get install -y docker.io
+
 DOC
+
+
+
