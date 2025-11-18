@@ -1,15 +1,18 @@
 #!/bin/bash
 
-chmod a+x  kurimas1vm.sh 1.ansiInstall.sh 2.vault.sh 3.vmpackage.sh 4.natovm.sh 5.viliausvm.sh 6.arnovm.sh 7.hostas.sh 8.dockeris.sh 9.playbookai.sh 
-
 #----------SUDO/SSH PASSAI JUSU VMS--------
 #NATUI |SSH/SUDO/NORMAL PASS -  client    |
 #VILIUI|SSH/SUDO/NORMAL PASS -  database  |
 #ARNUI |SSH/SUDO/NORMAL PASS -  webserver |
 
-source ./kurimas1vm.sh # sukuria ANSIBLE VM NAUDOJANT BASH !!! 
+
+source ./kurimas1vm.sh 				# sukuria ANSIBLE VM NAUDOJANT BASH !!! 
+
 
 $CSSH_CON  'bash -s' < 1.ansiInstall.sh  #1. atsiuncia ansible ir ansible galaxy collections
+
+$CSSH_CON 'bash -s' < webserver.doc
+$CSSH_CON 'bash -s' < database.doc
 
 $CSSH_CON 'bash -s' < 2.vault.sh    #2. cia failas kuriame yra visu musu open nebula passai juos encryptina
 				    #2. todel visi playbookams (9.playbookai.sh) turi buti duodami passai
@@ -24,6 +27,7 @@ $CSSH_CON 'bash -s' < 5.viliausvm.sh
 $CSSH_CON 'bash -s' < 6.arnovm.sh 
 
 $CSSH_CON 'bash -s' < 7.hostas.sh   # 7.  suranda kur yra KIEKVIENO PRIVATE IP txt failas issaugotas, pritaiko tai i variable ir ji ideda i host faila
+
 
 $CSSH_CON 'bash -s' < 8.dockeris.sh  # 8.  sukuria kiekvienam dockeri bet cia ignorinkit jis neveikia 
                                      # 8. bet esme ir goalas kdl as visa sita dariau kad dabar galiu visiems hostams rasyti ansible playbookus ir jiems siusti dockeri,t.t
