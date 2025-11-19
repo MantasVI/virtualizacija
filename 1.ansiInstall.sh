@@ -17,9 +17,9 @@ sudo tee /etc/apt/sources.list.d/opennebula.list
 sudo apt-get update
 sudo apt-get install -y opennebula-tools
 
-ansible -m ping all
-mkdir -p /home/mavi1016/.ansible
+mkdir -p /home/mavi1016/.ansible/webstack/app
+#mkdir -p /home/mavi1016/.ansible/dbstack
+
 cd /home/mavi1016/.ansible
 
 ansible-galaxy collection install community.general --force
-exit

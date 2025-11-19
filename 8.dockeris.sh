@@ -2,57 +2,119 @@
 
 cd /home/mavi1016/.ansible
 
-ansible-galaxy role install geerlingguy.docker
-
-
 cat > docker.yml << "DOC"
-- name: Install Docker on all
+- name: Install Docker on all VMs
   hosts: all
-  become: true
+  become: yes
   tasks:
-    - name: Install docker 
-      shell: | 
-        apt-get update
-        apt-get install -y docker.io
 
-- name: Copy Dockerfile to webserver
-  hosts: webserver
-  become: true
-  tasks:
-    - name: Copy Dockerfile.data
-      copy:
-        src: /home/mavi1016/.ansible/Dockerfile.data
-        dest: /home/arba1037/Dockerfile
+    # ---------------------------------------------------------
+    # CREATE ALL REQUIRED APT DIRECTORIES (FROM SCRATCH)
+    # ---------------------------------------------------------
+    - name: Create /var/lib/apt directory
+      file:
+        path: /var/lib/apt
+        state: directory
+        mode: "0755"
 
-- name: Copy Dockerfile to database
-  hosts: database
-  become: true
-  tasks:
-    - name: Copy DockerfileData
-      copy:
-        src: /home/mavi1016/.ansible/DockerfileData
-        dest: /home/viba1062/DockerfileData
+    - name: Create /var/lib/apt/lists directory
+      file:
+        path: /var/lib/apt/lists
+        state: directory
+        mode: "0755"
 
-- name: Run LAMP webserver container
-  hosts: webserver
-  become: true
-  tasks:
-    - name: Build and run custom webserver container
+    - name: Create /var/lib/apt/lists/partial directory
+      file:
+        path: /var/lib/apt/lists/partial
+        state: directory
+        mode: "0755"
+
+    # ---------------------------------------------------------
+    # CREATE LOCK FILES (fixes 'could not open lock file')
+    # ---------------------------------------------------------
+    - name: Ensure APT lock files exist
+      file:
+        path: "{{ item }}"
+        state: touch
+        mode: "0644"
+      loop:
+        - /var/lib/apt/lists/lock
+        - /var/lib/dpkg/lock
+        - /var/lib/dpkg/lock-frontend
+
+    # ---------------------------------------------------------
+    # UPDATE APT CACHE SAFELY
+    # ---------------------------------------------------------
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    # ---------------------------------------------------------
+    # INSTALL DEPENDENCIES
+    # ---------------------------------------------------------
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - lsb-release
+          - gnupg
+          - curl
+        state: present
+
+    # ---------------------------------------------------------
+    # ADD DOCKER GPG KEY
+    # ---------------------------------------------------------
+    - name: Add Docker GPG key
       shell: |
-        cd /home/arba1037
-        docker build -f DockerfileWeb -t lamp-webserver .
-        docker run -dit --name webserver -p 80:80 lamp-webserver
+        install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg \
+        | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        chmod a+r /etc/apt/keyrings/docker.gpg
 
+    # ---------------------------------------------------------
+    # ADD DOCKER REPOSITORY
+    # AUTO-DETECTS UBUNTU OR DEBIAN
+    # ---------------------------------------------------------
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        filename: docker
+        state: present
 
-- name: Run LAMP database container
-  hosts: database
-  become: true
+    # ---------------------------------------------------------
+    # INSTALL DOCKER + COMPOSE PLUGIN
+    # ---------------------------------------------------------
+    - name: Install Docker engine and Compose plugin
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: latest
+        update_cache: yes
+
+# =====================================================
+# DEPLOY WEBSTACK ON WEBSERVER VM
+# =====================================================
+- name: Deploy Webstack on webserver
+  hosts: webserver
+  become: yes
   tasks:
-    - name: Build and run custom database container
+
+    - name: Copy entire webstack directory from Ansible VM
+      copy:
+        src: /home/mavi1016/.ansible/webstack/
+        dest: /home/arba1037/webstack/
+        owner: arba1037
+        group: arba1037
+        mode: "0755"
+
+    - name: Start containers using Docker Compose
       shell: |
-        cd /home/viba1062
-        docker build -f DockerfileData -t database .
-        docker run -dit --name database -p 80:80 database
+        cd /home/arba1037/webstack
+        docker compose up -d
+      args:
+        executable: /bin/bash
 DOC
-
-

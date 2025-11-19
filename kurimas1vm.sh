@@ -35,6 +35,3 @@ echo "Connection string: $CSSH_CON"
 echo "Local IP: $CSSH_PRIP"
 fi
 echo "STAGE 1 SUKURTAS ANSIBLE VM"
-
-
-
