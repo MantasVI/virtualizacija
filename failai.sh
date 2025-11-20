@@ -4,36 +4,135 @@ mkdir -p /home/mavi1016/.ansible/webstack/app
 cd /home/mavi1016/.ansible/webstack/app
 
 # PHP TEST FILE
+
 cat > index.php <<"EOF"
 <?php
-$host = getenv('DB_HOST');
-$db = getenv('DB_NAME');
-$user = getenv('DB_USER');
-$pass = getenv('DB_PASSWORD');
+session_start();  // Start session
 
-$mysqli = new mysqli($host, $user, $pass, $db);
-
-if ($mysqli->connect_error) {
-    die("MySQL connection failed: " . $mysqli->connect_error);
+// If already logged in, redirect to home
+if (isset($_SESSION['patient_id'])) {
+    header("Location: home.php");
+    exit;
 }
 
-echo "<h1>✅ PHP is working</h1>";
-echo "<p>Connected to <strong>$db</strong> on <strong>$host</strong> as <strong>$user</strong>.</p>";
+// Database connection
+$servername = getenv('DB_HOST');
+$username   = getenv('DB_USER');
+$password   = getenv('DB_PASSWORD');
+$dbname     = getenv('DB_NAME');
+$conn = new mysqli($servername, $username, $password, $dbname);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
 
-$result = $mysqli->query("SHOW TABLES");
-if ($result) {
-    echo "<h2>📋 Tables in '$db':</h2><ul>";
-    while ($row = $result->fetch_array()) {
-        echo "<li>{$row[0]}</li>";
+$error = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    if (empty($email) || empty($password)) {
+        $error = "Email and password are required";
+    } else {
+        $stmt = $conn->prepare("SELECT id, email, password FROM patients WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            if (password_verify($password, $row['password'])) {
+                $_SESSION['patient_id']    = $row['id'];
+                $_SESSION['patient_email'] = $row['email'];
+                header("Location: home.php");
+                exit;
+            }
+        }
+        $error = "Invalid email or password";
     }
-    echo "</ul>";
-} else {
-    echo "<p>No tables or failed to list them.</p>";
+    if ($error) {
+        header("Location: index.php?error=" . urlencode($error));
+        exit;
+    }
 }
-
-$mysqli->close();
 ?>
+<!DOCTYPE html>
+<html>
+<head><title>Login</title></head>
+<body>
+<h2>Login</h2>
+<?php if (isset($_GET['error'])): ?>
+  <p style="color:red;"><?php echo htmlspecialchars($_GET['error']); ?></p>
+<?php endif; ?>
+<form method="post" action="index.php">
+    <label>Email:</label><br>
+    <input type="email" name="email" required><br><br>
+    <label>Password:</label><br>
+    <input type="password" name="password" required><br><br>
+    <button type="submit">Login</button>
+</form>
+</body>
+</html>
 EOF
+
+# Create home page
+cat > home.php <<"EOF"
+<?php
+session_start();
+if (!isset($_SESSION['patient_id'])) {
+    header("Location: index.php");
+    exit;
+}
+?>
+<!DOCTYPE html>
+<html>
+<head><title>Home</title></head>
+<body>
+<h2>Welcome, <?php echo htmlspecialchars($_SESSION['patient_email']); ?>!</h2>
+<p>You are now logged in.</p>
+<p><a href="logout.php">Logout</a></p>
+</body>
+</html>
+EOF
+
+# Create logout script
+cat > logout.php <<"EOF"
+<?php
+session_start();
+session_unset();
+session_destroy();
+header("Location: index.php");
+exit;
+EOF
+
+
+
+#cat > index.php <<"EOF"
+#<?php
+#$host = getenv('DB_HOST');
+#$db = getenv('DB_NAME');
+#$user = getenv('DB_USER');
+#$pass = getenv('DB_PASSWORD');
+
+#$mysqli = new mysqli($host, $user, $pass, $db);
+
+#if ($mysqli->connect_error) {
+#    die("MySQL connection failed: " . $mysqli->connect_error);
+#}
+
+#echo "<h1>✅ PHP is working</h1>";
+#echo "<p>Connected to <strong>$db</strong> on <strong>$host</strong> as <strong>$user</strong>.</p>";
+
+#$result = $mysqli->query("SHOW TABLES");
+#if ($result) {
+#    echo "<h2>📋 Tables in '$db':</h2><ul>";
+#    while ($row = $result->fetch_array()) {
+#        echo "<li>{$row[0]}</li>";
+#    }
+#    echo "</ul>";
+#} else {
+#    echo "<p>No tables or failed to list them.</p>";
+#}
+#
+#$mysqli->close();
+#?>
+#EOF
 
 cd /home/mavi1016/.ansible/webstack
 
