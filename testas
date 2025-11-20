@@ -1,0 +1,681 @@
+#!/bin/bash
+
+ssh-keygen -t ed25519 -f /home/mavi1016/.ssh/id_ed25519 -N ""
+
+sudo apt update -y
+sudo apt install -y ansible curl wget gnupg lsb-release
+
+sudo mkdir -p /etc/apt/keyrings
+
+wget -q -O- https://downloads.opennebula.io/repo/repo2.key | \
+sudo gpg --dearmor --yes -o /etc/apt/keyrings/opennebula.gpg
+
+echo "deb [signed-by=/etc/apt/keyrings/opennebula.gpg] \
+https://downloads.opennebula.io/repo/6.10/Ubuntu/24.04 stable opennebula" | \
+sudo tee /etc/apt/sources.list.d/opennebula.list
+
+sudo apt-get update
+sudo apt-get install -y opennebula-tools
+
+mkdir -p  /home/mavi1016/.ansible
+cd /home/mavi1016/.ansible
+
+ansible-galaxy collection install community.general --force
+#!/bin/bash
+a
+cd /home/mavi1016/.ansible
+cat > vault.yml << "safe"
+ansibleuser1: "naka1314"
+ansiblepass1: "sataNZetro"
+ansibleuser2: "dope1157"
+ansiblepass2: "h7j9gq2DWAHK"
+ansibleuser3: "viba1062"
+ansiblepass3: "viba1062"
+ansibleuser4: "arba1037"
+ansiblepass4: "arnas2005"
+safe
+
+echo "domantas" > vault.txt
+ansible-vault encrypt vault.yml --vault-password-file vault.txt
+#!/bin/bash
+a
+cd /home/mavi1016/.ansible/
+
+cat > ymlkurimas.yml << "BMW"
+- name: instaliuoju kas reikia opennebulai
+  become: yes
+  hosts: localhost
+  vars_files:
+    - vault.yml
+  collections:
+    - community.general
+
+  tasks:
+    - name: instaliuojam python packges
+      apt:
+        name:
+          - python3
+          - python3-pip
+          - python3-venv
+          - build-essential
+        state: present
+        update_cache: yes
+    - name: instaliuoju pyone ir oca
+      pip:
+        name:
+          - pyone
+          - oca
+        state: present
+        extra_args: --break-system-packages
+
+BMW
+#!/bin/bash
+a
+cd /home/mavi1016/.ansible/
+
+cat > natovm.yml << "BMW"
+- name: Pradedu NATO VM KURTI
+  become: yes
+  hosts: localhost
+  vars_files:
+    - vault.yml
+  collections:
+    - community.general
+  tasks:
+    - name: kuriam natui vm
+      community.general.one_vm:
+        api_url: "https://grid5.mif.vu.lt/cloud3/RPC2"
+        api_username: "{{ ansibleuser1 }}"
+        api_password: "{{ ansiblepass1 }}"
+        template_name: "client_rimtas"
+        attributes:
+          name: "natas_client_vm"
+        state: present
+      register: "natas_client_vm"
+
+    - name: Palaukiam kol VM uzsikraus
+      pause:
+        seconds: 20
+
+    - name: Gauti VM info per CLI
+      shell: onevm show {{ natas_client_vm.instances_ids[0] }} --user "{{ ansibleuser1 }}" --password "{{ ansiblepass1 }}" --endpoint https://grid5.mif.vu.lt/cloud3/RPC2
+      register: vm_natas
+
+    - name: Rodyti formatuotą VM informaciją
+      debug:
+        msg:
+          - "{{ vm_natas.stdout_lines | select('search', 'CONNECT_INFO1') | list }}"
+          - "{{ vm_natas.stdout_lines | select('search', 'PUBLIC_IP') | list }}"
+          - "{{ vm_natas.stdout_lines | select('search', 'PRIVATE_IP') | list }}"
+          - "{{ vm_natas.stdout_lines | select('search', 'TCP_PORT_FORWARDING') | list }}"
+    
+    - name: sukuriu NATOOOO private ip variable
+      set_fact:
+        nato_private_ip: "{{ vm_natas.stdout_lines | select('search', 'PRIVATE_IP') | list | first | split('=') | last | replace('\"', '') | trim }}"
+
+    - name: nato  private IP i txt faila
+      copy:
+        dest: /home/mavi1016/.ansible/nato_ip.txt
+        content: "{{ nato_private_ip }}"
+
+BMW
+#!/bin/bash
+a
+cd /home/mavi1016/.ansible/
+
+cat > viliausvm.yml << "BMW"
+- name: Pradedu Viliaus VM KURTI
+  become: yes
+  hosts: localhost
+  vars_files:
+    - vault.yml
+  collections:
+    - community.general
+  tasks: 
+    - name: kuriam viliui vm
+      community.general.one_vm:
+        api_url: "https://grid5.mif.vu.lt/cloud3/RPC2"
+        api_username: "{{ ansibleuser3 }}"
+        api_password: "{{ ansiblepass3 }}"
+        template_name: "database_rimtas"
+        attributes:
+          name: "vilius_database_vm"
+        state: present
+      register: vilius_database_vm
+
+    - name: Palaukiam kol VM uzsikraus
+      pause:
+        seconds: 20
+
+    - name: Gauti VM info per CLI
+      shell: onevm show {{ vilius_database_vm.instances_ids[0] }} --user "{{ ansibleuser3 }}" --password "{{ ansiblepass3 }}" --endpoint https://grid5.mif.vu.lt/cloud3/RPC2
+      register: vm_vilius
+
+    - name: Rodyti formatuotą VM informaciją
+      debug:
+        msg:
+          - "{{ vm_vilius.stdout_lines | select('search', 'CONNECT_INFO1') | list }}"
+          - "{{ vm_vilius.stdout_lines | select('search', 'PUBLIC_IP') | list }}"
+          - "{{ vm_vilius.stdout_lines | select('search', 'PRIVATE_IP') | list }}"
+          - "{{ vm_vilius.stdout_lines | select('search', 'TCP_PORT_FORWARDING') | list }}"
+
+    - name: sukuriu VILIAUSSSSS private ip variable
+      set_fact:
+        viliaus_private_ip: "{{ vm_vilius.stdout_lines | select('search', 'PRIVATE_IP') | list | first | split('=') | last | replace('\"', '') | trim }}"
+
+    - name: viliaus ip i txt
+      copy:
+        dest: /home/mavi1016/.ansible/viliaus_ip.txt
+        content: "{{ viliaus_private_ip }}"
+BMW
+#!/bin/bash
+a
+cd /home/mavi1016/.ansible/
+
+cat > arnovm.yml << "BMW"
+- name: Pradedu ARNO VM KURTI
+  become: yes
+  hosts: localhost
+  vars_files:
+    - vault.yml
+  collections:
+    - community.general
+  tasks:
+    - name: kuriam arnui vm
+      community.general.one_vm:
+        api_url: "https://grid5.mif.vu.lt/cloud3/RPC2"
+        api_username: "{{ ansibleuser4 }}"
+        api_password: "{{ ansiblepass4 }}"
+        template_name: "webserver_rimtas"
+        attributes:
+          name: "arnas_webserver_vm"
+        state: present
+      register: arnas_webserver_vm
+
+    - name: Palaukiam kol VM uzsikraus
+      pause:
+        seconds: 20
+
+    - name: Gauti VM info per CLI
+      shell: onevm show {{ arnas_webserver_vm.instances_ids[0] }} --user "{{ ansibleuser4 }}" --password "{{ ansiblepass4 }}" --endpoint https://grid5.mif.vu.lt/cloud3/RPC2
+      register: vm_arnas
+
+    - name: Rodyti formatuotą VM informaciją
+      debug:
+        msg:
+          - "{{ vm_arnas.stdout_lines | select('search', 'CONNECT_INFO1') | list }}"
+          - "{{ vm_arnas.stdout_lines | select('search', 'PUBLIC_IP') | list }}"
+          - "{{ vm_arnas.stdout_lines | select('search', 'PRIVATE_IP') | list }}"
+          - "{{ vm_arnas.stdout_lines | select('search', 'TCP_PORT_FORWARDING') | list }}"
+
+    - name: sukuriu ARNOOOO private ip variable
+      set_fact:
+        arno_private_ip: "{{ vm_arnas.stdout_lines | select('search', 'PRIVATE_IP') | list | first | split('=') | last | replace('\"', '') | trim }}"
+
+    - name: arno ip i txt 
+      copy:
+        dest: /home/mavi1016/.ansible/arno_ip.txt
+        content: "{{ arno_private_ip }}"
+
+    - name: Copy Ansible SSH key to Arnas VM
+      ansible.builtin.authorized_key:
+        user: mavi1016
+        key: "{{ lookup('file', '/home/mavi1016/.ssh/id_ed25519.pub') }}"
+        state: present
+      vars:
+        ansible_user: arba1037
+        ansible_host: "{{ arno_private_ip }}"
+        ansible_ssh_private_key_file: /mavi1016/.ssh/id_ed25519
+      delegate_to: localhost
+BMW
+#!/bin/bash
+a
+cd /home/mavi1016/.ansible/
+
+cat > host.yml << "BMW"
+- name: SUKURIU VISU HOST FILE SU JU PRIVATE IPS FFS
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Read saved IPs
+      set_fact:
+        arno_private_ip: "{{ lookup('file', '/home/mavi1016/.ansible/arno_ip.txt') }}"
+        viliaus_private_ip: "{{ lookup('file', '/home/mavi1016/.ansible/viliaus_ip.txt') }}"
+        nato_private_ip: "{{ lookup('file', '/home/mavi1016/.ansible/nato_ip.txt') }}"
+
+    - name: Write Ansible hosts inventory file
+      copy:
+        dest: /home/mavi1016/.ansible/hosts
+        content: |
+          [webserver]
+          {{ arno_private_ip }} ansible_user=arba1037 ansible_ssh_pass=webserver ansible_become=yes ansible_become_pass=webserver
+          [database]
+          {{ viliaus_private_ip }} ansible_user=viba1062 ansible_ssh_pass=database ansible_become=yes ansible_become_pass=database
+          [client]
+          {{ nato_private_ip }} ansible_user=naka1314 ansible_ssh_pass=client ansible_become=yes ansible_become_pass=client
+          [all]
+          {{ arno_private_ip }} ansible_user=arba1037 ansible_ssh_pass=webserver ansible_become=yes ansible_become_pass=webserver
+          {{ viliaus_private_ip }} ansible_user=viba1062 ansible_ssh_pass=database ansible_become=yes ansible_become_pass=database
+          {{ nato_private_ip }} ansible_user=naka1314 ansible_ssh_pass=client ansible_become=yes ansible_become_pass=client
+BMW
+#!/bin/bash
+set -e
+
+cd /home/mavi1016/.ansible
+
+cat > docker.yml << "DOC"
+- name: Install Docker on all VMs
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Make apt lists folder
+      file:
+        path: /var/lib/apt/lists
+        state: directory
+        mode: '0755'
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install dependencies
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - lsb-release
+          - gnupg
+          - curl
+        state: present
+
+    - name: Add Docker GPG key
+      shell: |
+        install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg \
+        | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        chmod a+r /etc/apt/keyrings/docker.gpg
+
+    - name: Add Docker repo
+      apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        filename: docker
+        state: present
+
+    - name: Install Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: latest
+        update_cache: yes
+
+# ===============================================================
+# DEPLOY DATABASE ON VILIUS
+# ===============================================================
+- name: Deploy database
+  hosts: database
+  become: yes
+  tasks:
+    - name: Copy DB stack files
+      copy:
+        src: /home/mavi1016/.ansible/dbstack/
+        dest: /home/viba1062/dbstack/
+        mode: "0755"
+
+    - name: Start MariaDB container
+      shell: |
+        cd /home/viba1062/dbstack
+        docker compose up -d
+      args:
+        executable: /bin/bash
+
+# ===============================================================
+# DEPLOY WEB ON ARNAS
+# ===============================================================
+- name: Deploy Webstack on webserver
+  hosts: webserver
+  become: yes
+  tasks:
+
+    - name: Copy webstack
+      copy:
+        src: /home/mavi1016/.ansible/webstack/
+        dest: /home/arba1037/webstack/
+        mode: "0755"
+
+    - name: Create .env file with DB settings
+      copy:
+        dest: /home/arba1037/webstack/.env
+        content: |
+          DB_HOST={{ lookup('file', '/home/mavi1016/.ansible/viliaus_ip.txt') | trim }}
+          DB_PORT=3306
+          DB_NAME=hospital
+          DB_USER=hospital_user
+          DB_PASSWORD=hospital_pass
+        mode: "0600"
+
+    - name: Start Web containers
+      shell: |
+        cd /home/arba1037/webstack
+        docker compose up -d
+      args:
+        executable: /bin/bash
+DOC
+#!/bin/bash
+
+cd /home/mavi1016/.ansible
+
+sudo apt install sshpass
+
+ansible-playbook --vault-password-file vault.txt ymlkurimas.yml
+ansible-playbook --vault-password-file vault.txt natovm.yml
+ansible-playbook --vault-password-file vault.txt viliausvm.yml
+ansible-playbook --vault-password-file vault.txt arnovm.yml
+ansible-playbook --vault-password-file vault.txt host.yml
+
+sshpass -p 'database' sudo ssh-copy-id -i /home/mavi1016/.ssh/id_ed25519.pub -o StrictHostKeyChecking=accept-new  viba1062@$(cat viliaus_ip.txt)  
+sshpass -p 'webserver' sudo ssh-copy-id -i /home/mavi1016/.ssh/id_ed25519.pub -o StrictHostKeyChecking=accept-new  arba1037@$(cat arno_ip.txt)
+sshpass -p 'client' sudo ssh-copy-id -i /home/mavi1016/.ssh/id_ed25519.pub -o StrictHostKeyChecking=accept-new naka1314@$(cat nato_ip.txt)
+
+ansible -i /home/mavi1016/.ansible/hosts all -m ping
+
+ansible-playbook -i /home/mavi1016/.ansible/hosts docker.yml  --ask-become-pass 
+#!/bin/bash
+
+mkdir -p /home/mavi1016/.ansible/webstack/app
+cd /home/mavi1016/.ansible/webstack/app
+
+# PHP TEST FILE
+cat > index.php <<"EOF"
+<?php
+$host = getenv('DB_HOST');
+$db = getenv('DB_NAME');
+$user = getenv('DB_USER');
+$pass = getenv('DB_PASSWORD');
+
+$mysqli = new mysqli($host, $user, $pass, $db);
+
+if ($mysqli->connect_error) {
+    die("MySQL connection failed: " . $mysqli->connect_error);
+}
+
+echo "<h1>✅ PHP is working</h1>";
+echo "<p>Connected to <strong>$db</strong> on <strong>$host</strong> as <strong>$user</strong>.</p>";
+
+$result = $mysqli->query("SHOW TABLES");
+if ($result) {
+    echo "<h2>📋 Tables in '$db':</h2><ul>";
+    while ($row = $result->fetch_array()) {
+        echo "<li>{$row[0]}</li>";
+    }
+    echo "</ul>";
+} else {
+    echo "<p>No tables or failed to list them.</p>";
+}
+
+$mysqli->close();
+?>
+EOF
+
+cd /home/mavi1016/.ansible/webstack
+
+# NGINX DOCKERFILE
+cat > nginx.Dockerfile <<"DOC"
+FROM ubuntu:24.04
+
+RUN apt update && apt install -y nginx
+
+RUN rm -rf /etc/nginx/sites-enabled/default
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY app/ /var/www/html/
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+DOC
+
+# PHP DOCKERFILE
+cat > php.Dockerfile <<"EOF"
+FROM ubuntu:24.04
+
+RUN apt update && apt install -y \
+    php-fpm \
+    php-mysql \
+    php-cli \
+    php-common \
+    mariadb-client
+
+WORKDIR /var/www/html
+
+RUN sed -i 's|listen = /run/php/php8.3-fpm.sock|listen = 9000|' /etc/php/8.3/fpm/pool.d/www.conf
+RUN echo "clear_env = no" >> /etc/php/8.3/fpm/pool.d/www.conf
+
+EXPOSE 9000
+
+CMD ["/usr/sbin/php-fpm8.3", "-F"]
+EOF
+
+# NGINX CONFIG
+cat > nginx.conf <<"conf"
+server {
+    listen 80;
+    server_name _;
+
+    root /var/www/html;
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass app:9000;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME /var/www/html$fastcgi_script_name;
+    }
+}
+conf
+
+# DOCKER-COMPOSE (no Ansible variables)
+cat > docker-compose.yml <<"comp"
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: php.Dockerfile
+    container_name: hospital_php
+    volumes:
+      - ./app:/var/www/html
+    environment:
+      DB_HOST: "${DB_HOST}"
+      DB_PORT: "${DB_PORT}"
+      DB_NAME: "${DB_NAME}"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+    restart: always
+
+  web:
+    build:
+      context: .
+      dockerfile: nginx.Dockerfile
+    container_name: hospital_nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+    volumes:
+      - ./app:/var/www/html
+    restart: always
+comp
+#!/bin/bash
+
+mkdir -p /home/mavi1016/.ansible/dbstack
+cd /home/mavi1016/.ansible/dbstack
+
+cat > Dockerfile <<"DOC"
+FROM ubuntu:24.04
+
+RUN apt update && apt install -y mariadb-server mariadb-client
+
+COPY my.cnf /etc/mysql/my.cnf
+COPY init.sql /docker-entrypoint-initdb.d/init.sql
+
+RUN chmod 644 /etc/mysql/my.cnf
+
+EXPOSE 3306
+
+CMD ["mysqld_safe"]
+DOC
+
+cat > my.cnf <<"DAT"
+[client]
+port=3306
+socket=/run/mysqld/mysqld.sock
+
+[mysqld]
+user=mysql
+bind-address=0.0.0.0
+port=3306
+socket=/run/mysqld/mysqld.sock
+datadir=/var/lib/mysql
+skip-networking=0
+skip-bind-address
+DAT
+
+cat > init.sql <<"SQL"
+CREATE DATABASE IF NOT EXISTS hospital;
+
+CREATE USER IF NOT EXISTS 'hospital_user'@'arnas-webserver-vm-arba1037.cloud' IDENTIFIED BY 'hospital_pass';
+GRANT ALL PRIVILEGES ON hospital.* TO 'hospital_user'@'arnas-webserver-vm-arba1037.cloud';
+FLUSH PRIVILEGES;
+
+USE hospital;
+
+CREATE TABLE IF NOT EXISTS patients (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(255),
+    email VARCHAR(255),
+    password VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS doctors (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255),
+    speciality VARCHAR(255),
+    schedule VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS appointments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    patient_id INT,
+    doctor_id INT,
+    appointment_time DATETIME,
+    FOREIGN KEY (patient_id) REFERENCES patients(id),
+    FOREIGN KEY (doctor_id) REFERENCES doctors(id)
+);
+SQL
+
+cat > docker-compose.yml <<"COM"
+version: "3.9"
+
+services:
+  mariadb:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hospital_db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+
+volumes:
+  db_data:
+COM
+
+#!/bin/bash
+if ! command -v onevm; then
+
+sudo apt install -y curl wget gnupg lsb-release
+sudo mkdir -p /etc/apt/keyrings
+wget -q -O- https://downloads.opennebula.io/repo/repo2.key | \
+    sudo gpg --dearmor --yes -o /etc/apt/keyrings/opennebula.gpg
+
+echo "deb [signed-by=/etc/apt/keyrings/opennebula.gpg] \
+https://downloads.opennebula.io/repo/6.10/Ubuntu/24.04 stable opennebula" | \
+sudo tee /etc/apt/sources.list.d/opennebula.list
+
+sudo apt-get update
+sudo apt-get install -y opennebula-tools
+
+else
+
+ssh-add
+CUSER=mavi1016
+CPASS=Kietasislapas1
+CENDPOINT=https://grid5.mif.vu.lt/cloud3/RPC2
+template="ansible_rimtas"
+VMname="ansiblas"
+CVMREZ=$(onetemplate instantiate $template --name $VMname --user $CUSER --password $CPASS  --endpoint $CENDPOINT)
+CVMID=$(echo $CVMREZ |cut -d ' ' -f 3)
+echo $CVMID
+
+echo "Waiting for VM to RUN 20 sec."
+sleep 40
+
+$(onevm show $CVMID  --user $CUSER --password $CPASS  --endpoint $CENDPOINT >$CVMID.txt)
+CSSH_CON=$(cat $CVMID.txt | grep CONNECT\_INFO1| cut -d '=' -f 2 | tr -d '"'|sed 's/'$CUSER'/root/')
+CSSH_PRIP=$(cat $CVMID.txt | grep PRIVATE\_IP| cut -d '=' -f 2 | tr -d '"')
+echo "Connection string: $CSSH_CON"
+echo "Local IP: $CSSH_PRIP"
+fi
+echo "STAGE 1 SUKURTAS ANSIBLE VM"
+#!/bin/bash
+
+#----------SUDO/SSH PASSAI JUSU VMS--------
+#NATUI |SSH/SUDO/NORMAL PASS -  client    |
+#VILIUI|SSH/SUDO/NORMAL PASS -  database  |
+#ARNUI |SSH/SUDO/NORMAL PASS -  webserver |
+
+
+source ./kurimas1vm.sh 				# sukuria ANSIBLE VM NAUDOJANT BASH !!! 
+
+
+$CSSH_CON  'bash -s' < 1.ansiInstall.sh  #1. atsiuncia ansible ir ansible galaxy collections
+
+$CSSH_CON 'bash -s' < failai.sh
+$CSSH_CON 'bash -s' < failas2.sh
+
+$CSSH_CON 'bash -s' < 2.vault.sh    #2. cia failas kuriame yra visu musu open nebula passai juos encryptina
+				    #2. todel visi playbookams (9.playbookai.sh) turi buti duodami passai
+
+$CSSH_CON 'bash -s' < 3.vmpackage.sh  #3. atsiucnia visko ka reikia per ANSIBLE kurti vmus
+
+$CSSH_CON 'bash -s' < 4.natovm.sh    # 4.   sukuriu visiems jums vm naudojant template:rimtas_webserver,rimtas_database,rimtas_client)
+				     # 4.   extractinu nato vm info poto issaugau private ip jo i txt faila
+
+$CSSH_CON 'bash -s' < 5.viliausvm.sh 
+
+$CSSH_CON 'bash -s' < 6.arnovm.sh 
+
+$CSSH_CON 'bash -s' < 7.hostas.sh   # 7.  suranda kur yra KIEKVIENO PRIVATE IP txt failas issaugotas, pritaiko tai i variable ir ji ideda i host faila
+
+
+$CSSH_CON 'bash -s' < 8.dockeris.sh  # 8.  sukuria kiekvienam dockeri bet cia ignorinkit jis neveikia 
+                                     # 8. bet esme ir goalas kdl as visa sita dariau kad dabar galiu visiems hostams rasyti ansible playbookus ir jiems siusti dockeri,t.t
+
+$CSSH_CON 'bash -s' < 9.playbookai.sh   # 9. playbookai paleisti visiems failams. KAD gelciau naudotis host failu turi papingint kad vm komunikuoja su vienas kitu
+					# 9. tai reiskia kad man reikia ideti  ANSIBLE VM PUBLIC SSH KEY jums KIEKVIENAM i vmus
+					# 9. tai as sukuriau TEMPLATE KIEKVIENAM(rimtas_webserver,rimtas_database,rimtas_client) 
+					# 9. nes paleidus ta ssh-copy-id komanda praso jusu vm passwordo tai tsg iveda sudo/ssh pasus nurodytus virsuje zdz  
