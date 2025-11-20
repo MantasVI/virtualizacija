@@ -26,7 +26,7 @@ CVMID=$(echo $CVMREZ |cut -d ' ' -f 3)
 echo $CVMID
 
 echo "Waiting for VM to RUN 20 sec."
-sleep 30
+sleep 40
 
 $(onevm show $CVMID  --user $CUSER --password $CPASS  --endpoint $CENDPOINT >$CVMID.txt)
 CSSH_CON=$(cat $CVMID.txt | grep CONNECT\_INFO1| cut -d '=' -f 2 | tr -d '"'|sed 's/'$CUSER'/root/')

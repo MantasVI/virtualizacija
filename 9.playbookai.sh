@@ -16,4 +16,4 @@ sshpass -p 'client' sudo ssh-copy-id -i /home/mavi1016/.ssh/id_ed25519.pub -o St
 
 ansible -i /home/mavi1016/.ansible/hosts all -m ping
 
-ansible-playbook -i /home/mavi1016/.ansible/hosts docker.yml  -vvv --ask-become-pass 
+ansible-playbook -i /home/mavi1016/.ansible/hosts docker.yml  --ask-become-pass 

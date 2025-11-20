@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 cd /home/mavi1016/.ansible
 
@@ -8,51 +9,17 @@ cat > docker.yml << "DOC"
   become: yes
   tasks:
 
-    # ---------------------------------------------------------
-    # CREATE ALL REQUIRED APT DIRECTORIES (FROM SCRATCH)
-    # ---------------------------------------------------------
-    - name: Create /var/lib/apt directory
-      file:
-        path: /var/lib/apt
-        state: directory
-        mode: "0755"
-
-    - name: Create /var/lib/apt/lists directory
+    - name: Make apt lists folder
       file:
         path: /var/lib/apt/lists
         state: directory
-        mode: "0755"
+        mode: '0755'
 
-    - name: Create /var/lib/apt/lists/partial directory
-      file:
-        path: /var/lib/apt/lists/partial
-        state: directory
-        mode: "0755"
-
-    # ---------------------------------------------------------
-    # CREATE LOCK FILES (fixes 'could not open lock file')
-    # ---------------------------------------------------------
-    - name: Ensure APT lock files exist
-      file:
-        path: "{{ item }}"
-        state: touch
-        mode: "0644"
-      loop:
-        - /var/lib/apt/lists/lock
-        - /var/lib/dpkg/lock
-        - /var/lib/dpkg/lock-frontend
-
-    # ---------------------------------------------------------
-    # UPDATE APT CACHE SAFELY
-    # ---------------------------------------------------------
     - name: Update apt cache
       apt:
         update_cache: yes
 
-    # ---------------------------------------------------------
-    # INSTALL DEPENDENCIES
-    # ---------------------------------------------------------
-    - name: Install required packages
+    - name: Install dependencies
       apt:
         name:
           - apt-transport-https
@@ -62,9 +29,6 @@ cat > docker.yml << "DOC"
           - curl
         state: present
 
-    # ---------------------------------------------------------
-    # ADD DOCKER GPG KEY
-    # ---------------------------------------------------------
     - name: Add Docker GPG key
       shell: |
         install -m 0755 -d /etc/apt/keyrings
@@ -72,20 +36,13 @@ cat > docker.yml << "DOC"
         | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
         chmod a+r /etc/apt/keyrings/docker.gpg
 
-    # ---------------------------------------------------------
-    # ADD DOCKER REPOSITORY
-    # AUTO-DETECTS UBUNTU OR DEBIAN
-    # ---------------------------------------------------------
-    - name: Add Docker repository
+    - name: Add Docker repo
       apt_repository:
         repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
         filename: docker
         state: present
 
-    # ---------------------------------------------------------
-    # INSTALL DOCKER + COMPOSE PLUGIN
-    # ---------------------------------------------------------
-    - name: Install Docker engine and Compose plugin
+    - name: Install Docker
       apt:
         name:
           - docker-ce
@@ -95,23 +52,52 @@ cat > docker.yml << "DOC"
         state: latest
         update_cache: yes
 
-# =====================================================
-# DEPLOY WEBSTACK ON WEBSERVER VM
-# =====================================================
+# ===============================================================
+# DEPLOY DATABASE ON VILIUS
+# ===============================================================
+- name: Deploy database
+  hosts: database
+  become: yes
+  tasks:
+    - name: Copy DB stack files
+      copy:
+        src: /home/mavi1016/.ansible/dbstack/
+        dest: /home/viba1062/dbstack/
+        mode: "0755"
+
+    - name: Start MariaDB container
+      shell: |
+        cd /home/viba1062/dbstack
+        docker compose up -d
+      args:
+        executable: /bin/bash
+
+# ===============================================================
+# DEPLOY WEB ON ARNAS
+# ===============================================================
 - name: Deploy Webstack on webserver
   hosts: webserver
   become: yes
   tasks:
 
-    - name: Copy entire webstack directory from Ansible VM
+    - name: Copy webstack
       copy:
         src: /home/mavi1016/.ansible/webstack/
         dest: /home/arba1037/webstack/
-        owner: arba1037
-        group: arba1037
         mode: "0755"
 
-    - name: Start containers using Docker Compose
+    - name: Create .env file with DB settings
+      copy:
+        dest: /home/arba1037/webstack/.env
+        content: |
+          DB_HOST={{ lookup('file', '/home/mavi1016/.ansible/viliaus_ip.txt') | trim }}
+          DB_PORT=3306
+          DB_NAME=hospital
+          DB_USER=hospital_user
+          DB_PASSWORD=hospital_pass
+        mode: "0600"
+
+    - name: Start Web containers
       shell: |
         cd /home/arba1037/webstack
         docker compose up -d
