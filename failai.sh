@@ -3,137 +3,329 @@
 mkdir -p /home/mavi1016/.ansible/webstack/app
 cd /home/mavi1016/.ansible/webstack/app
 
-# PHP TEST FILE
+# ======================
+# config.php – HOSPITAL DB (VILIAUS)
+# ======================
+cat > config.php <<"EOF"
+<?php
+session_start();
 
+$host = getenv('DB_HOST');        // from .env (Viliaus private IP)
+$db   = getenv('DB_NAME');        // hospital
+$user = getenv('DB_USER');        // hospital_user
+$pass = getenv('DB_PASSWORD');    // hospital_pass
+
+$conn = mysqli_connect($host, $user, $pass, $db);
+
+if (!$conn) {
+    die("could not connect to hospital database!");
+}
+?>
+EOF
+
+# ======================
+# index.php – user home (must be logged in as user)
+# ======================
 cat > index.php <<"EOF"
 <?php
-session_start();  // Start session
-
-// If already logged in, redirect to home
-if (isset($_SESSION['patient_id'])) {
-    header("Location: home.php");
+require 'config.php';
+if (!empty($_SESSION["id"])) {
+    $id = $_SESSION["id"];
+    $result = mysqli_query($conn, "SELECT * FROM users WHERE id = $id");
+    $row = mysqli_fetch_assoc($result);
+} else {
+    header("Location: login.php");
     exit;
-}
-
-// Database connection
-$servername = getenv('DB_HOST');
-$username   = getenv('DB_USER');
-$password   = getenv('DB_PASSWORD');
-$dbname     = getenv('DB_NAME');
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-$error = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    if (empty($email) || empty($password)) {
-        $error = "Email and password are required";
-    } else {
-        $stmt = $conn->prepare("SELECT id, email, password FROM patients WHERE email = ?");
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($row = $result->fetch_assoc()) {
-            if (password_verify($password, $row['password'])) {
-                $_SESSION['patient_id']    = $row['id'];
-                $_SESSION['patient_email'] = $row['email'];
-                header("Location: home.php");
-                exit;
-            }
-        }
-        $error = "Invalid email or password";
-    }
-    if ($error) {
-        header("Location: index.php?error=" . urlencode($error));
-        exit;
-    }
 }
 ?>
 <!DOCTYPE html>
-<html>
-<head><title>Login</title></head>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Home</title>
+</head>
 <body>
-<h2>Login</h2>
-<?php if (isset($_GET['error'])): ?>
-  <p style="color:red;"><?php echo htmlspecialchars($_GET['error']); ?></p>
-<?php endif; ?>
-<form method="post" action="index.php">
-    <label>Email:</label><br>
-    <input type="email" name="email" required><br><br>
-    <label>Password:</label><br>
-    <input type="password" name="password" required><br><br>
-    <button type="submit">Login</button>
-</form>
+    <h1>Welcome <?php echo htmlspecialchars($row["user"]); ?></h1>
+    <p>
+        <a href="logout.php">LOGOUT</a>
+    </p>
+    <hr>
+    <p>
+        <a href="doctor_login.php">Doctor login</a> |
+        <a href="doctor_registration.php">Doctor registration</a>
+    </p>
 </body>
 </html>
 EOF
 
-# Create home page
-cat > home.php <<"EOF"
+# ======================
+# login.php – USER login (uses hospital.users)
+# ======================
+cat > login.php <<"EOF"
 <?php
-session_start();
-if (!isset($_SESSION['patient_id'])) {
+require 'config.php';
+
+if (isset($_POST["username"])) {
+    $username = $_POST["username"];
+    $password = $_POST["password"];
+
+    $result = mysqli_query($conn, "SELECT * FROM users WHERE user = '$username'");
+    $row    = mysqli_fetch_assoc($result);
+
+    if (mysqli_num_rows($result) > 0) {
+        // PLAIN TEXT PASSWORD CHECK – EXACTLY LIKE YOUR ORIGINAL
+        if ($password == $row["password"]) {
+            $_SESSION["login"] = true;
+            $_SESSION["id"]    = $row["id"];
+            header("Location: index.php");
+            exit;
+        } else {
+            echo "wrong password";
+        }
+    } else {
+        echo "not registered";
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login page</title>
+</head>
+<body>
+    <h2>User Login</h2>
+    <form action="" method="post" autocomplete="off">
+        <label for="username">username:</label>
+        <input type="text" name="username" id="username" required> <br>
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" required><br>
+        <button type="submit" name="submit">Login</button>
+    </form>
+
+    <p>
+        <a href="registration.php">User registration</a>
+    </p>
+    <p>
+        <a href="doctor_login.php">Doctor login</a> |
+        <a href="doctor_registration.php">Doctor registration</a>
+    </p>
+</body>
+</html>
+EOF
+
+# ======================
+# logout.php – clears ALL session
+# ======================
+cat > logout.php <<"EOF"
+<?php
+require 'config.php';
+$_SESSION = [];
+session_unset();
+session_destroy();
+header("Location: login.php");
+exit;
+?>
+EOF
+
+# ======================
+# registration.php – USER registration (hospital.users)
+# ======================
+cat > registration.php <<"EOF"
+<?php
+require 'config.php';
+
+if (!empty($_SESSION["id"])) {
     header("Location: index.php");
     exit;
 }
+
+if (isset($_POST["submit"])) {
+    $username  = $_POST["username"];
+    $password  = $_POST["password"];
+
+    $duplicate = mysqli_query($conn, "SELECT * FROM users WHERE user = '$username'");
+    if (mysqli_num_rows($duplicate) > 0) {
+        echo "username taken";
+    } else {
+        if (!empty($username) && !empty($password)) {
+            // PLAIN TEXT – EXACTLY LIKE YOUR ORIGINAL
+            $query = "INSERT INTO users (user, password) VALUES ('$username', '$password')";
+            mysqli_query($conn, $query);
+            echo "registration successful";
+        } else {
+            echo "registration failed";
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
-<html>
-<head><title>Home</title></head>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User registration</title>
+</head>
 <body>
-<h2>Welcome, <?php echo htmlspecialchars($_SESSION['patient_email']); ?>!</h2>
-<p>You are now logged in.</p>
-<p><a href="logout.php">Logout</a></p>
+    <form action="<?php $_SERVER["PHP_SELF"] ?>" method="post">
+        <h2>Welcome to the Linux hospital – User registration</h2>
+        username:<br>
+        <input type="text" name="username"><br>
+        password:<br>
+        <input type="password" name="password"><br>
+        <input type="submit" name="submit" value="register"><br>
+        <a href="login.php">User login</a><br>
+        <a href="doctor_login.php">Doctor login</a> |
+        <a href="doctor_registration.php">Doctor registration</a>
+    </form>
 </body>
 </html>
 EOF
 
-# Create logout script
-cat > logout.php <<"EOF"
+# ======================
+# doctor_login.php – DOCTOR login (hospital.doctors)
+# ======================
+cat > doctor_login.php <<"EOF"
 <?php
-session_start();
-session_unset();
-session_destroy();
-header("Location: index.php");
-exit;
+require 'config.php';
+
+if (isset($_POST["username"])) {
+    $username = $_POST["username"];
+    $password = $_POST["password"];
+
+    $result = mysqli_query($conn, "SELECT * FROM doctors WHERE user = '$username'");
+    $row    = mysqli_fetch_assoc($result);
+
+    if (mysqli_num_rows($result) > 0) {
+        // PLAIN TEXT
+        if ($password == $row["password"]) {
+            $_SESSION["doctor_login"] = true;
+            $_SESSION["doctor_id"]    = $row["id"];
+            $_SESSION["doctor_user"]  = $row["user"];
+            header("Location: doctor_index.php");
+            exit;
+        } else {
+            echo "wrong password";
+        }
+    } else {
+        echo "not registered";
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Doctor Login</title>
+</head>
+<body>
+    <h2>Doctor Login</h2>
+    <form action="" method="post" autocomplete="off">
+        <label for="username">username:</label>
+        <input type="text" name="username" id="username" required> <br>
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" required><br>
+        <button type="submit" name="submit">Login</button>
+    </form>
+
+    <p>
+        <a href="doctor_registration.php">Doctor registration</a>
+    </p>
+    <p>
+        <a href="login.php">User login</a> |
+        <a href="registration.php">User registration</a>
+    </p>
+</body>
+</html>
 EOF
 
+# ======================
+# doctor_registration.php – create doctor in hospital.doctors
+# ======================
+cat > doctor_registration.php <<"EOF"
+<?php
+require 'config.php';
 
+if (!empty($_SESSION["doctor_id"])) {
+    header("Location: doctor_index.php");
+    exit;
+}
 
-#cat > index.php <<"EOF"
-#<?php
-#$host = getenv('DB_HOST');
-#$db = getenv('DB_NAME');
-#$user = getenv('DB_USER');
-#$pass = getenv('DB_PASSWORD');
+if (isset($_POST["submit"])) {
+    $username  = $_POST["username"];
+    $password  = $_POST["password"];
 
-#$mysqli = new mysqli($host, $user, $pass, $db);
+    $duplicate = mysqli_query($conn, "SELECT * FROM doctors WHERE user = '$username'");
+    if (mysqli_num_rows($duplicate) > 0) {
+        echo "username taken";
+    } else {
+        if (!empty($username) && !empty($password)) {
+            // PLAIN TEXT
+            $query = "INSERT INTO doctors (user, password) VALUES ('$username', '$password')";
+            mysqli_query($conn, $query);
+            echo "doctor registration successful";
+        } else {
+            echo "registration failed";
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Doctor registration</title>
+</head>
+<body>
+    <form action="<?php $_SERVER["PHP_SELF"] ?>" method="post">
+        <h2>Linux hospital – Doctor registration</h2>
+        username:<br>
+        <input type="text" name="username"><br>
+        password:<br>
+        <input type="password" name="password"><br>
+        <input type="submit" name="submit" value="register"><br>
+        <a href="doctor_login.php">Doctor login</a><br>
+        <a href="login.php">User login</a> |
+        <a href="registration.php">User registration</a>
+    </form>
+</body>
+</html>
+EOF
 
-#if ($mysqli->connect_error) {
-#    die("MySQL connection failed: " . $mysqli->connect_error);
-#}
+# ======================
+# doctor_index.php – doctor home
+# ======================
+cat > doctor_index.php <<"EOF"
+<?php
+require 'config.php';
+if (empty($_SESSION["doctor_id"])) {
+    header("Location: doctor_login.php");
+    exit;
+}
+$doctor_name = isset($_SESSION["doctor_user"]) ? $_SESSION["doctor_user"] : "Doctor";
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Doctor Home</title>
+</head>
+<body>
+    <h1>Welcome Dr. <?php echo htmlspecialchars($doctor_name); ?></h1>
+    <p>
+        <a href="logout.php">LOGOUT</a>
+    </p>
+    <hr>
+    <p>
+        <a href="login.php">User login</a> |
+        <a href="registration.php">User registration</a>
+    </p>
+</body>
+</html>
+EOF
 
-#echo "<h1>✅ PHP is working</h1>";
-#echo "<p>Connected to <strong>$db</strong> on <strong>$host</strong> as <strong>$user</strong>.</p>";
-
-#$result = $mysqli->query("SHOW TABLES");
-#if ($result) {
-#    echo "<h2>📋 Tables in '$db':</h2><ul>";
-#    while ($row = $result->fetch_array()) {
-#        echo "<li>{$row[0]}</li>";
-#    }
-#    echo "</ul>";
-#} else {
-#    echo "<p>No tables or failed to list them.</p>";
-#}
-#
-#$mysqli->close();
-#?>
-#EOF
-
+# ======================
+# Docker + Nginx/PHP (unchanged, still works with .env from 8.dockeris.sh)
+# ======================
 cd /home/mavi1016/.ansible/webstack
 
 # NGINX DOCKERFILE
@@ -160,7 +352,7 @@ RUN apt update && apt install -y \
     php-mysql \
     php-cli \
     php-common \
-    mariadb-client        # added: install MariaDB client for CLI (e.g. mysql command)
+    mariadb-client
 WORKDIR /var/www/html
 RUN sed -i 's|listen = /run/php/php8.3-fpm.sock|listen = 9000|' /etc/php/8.3/fpm/pool.d/www.conf
 RUN echo "clear_env = no" >> /etc/php/8.3/fpm/pool.d/www.conf
@@ -190,7 +382,7 @@ server {
 }
 conf
 
-# DOCKER-COMPOSE (no Ansible variables)
+# DOCKER-COMPOSE (env vars from .env written by 8.dockeris.sh)
 cat > docker-compose.yml <<"comp"
 version: "3.9"
 

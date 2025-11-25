@@ -4,19 +4,19 @@ mkdir -p /home/mavi1016/.ansible/dbstack
 cd /home/mavi1016/.ansible/dbstack
 
 cat > Dockerfile <<"DOC"
-# dbstack/Dockerfile – use official MariaDB image
-FROM mariadb:10.11  # changed: official image will run init scripts automatically:contentReference[oaicite:2]{index=2}
+# dbstack/Dockerfile – MariaDB for HOSPITAL
+FROM mariadb:10.11
 COPY my.cnf /etc/mysql/my.cnf
 COPY init.sql /docker-entrypoint-initdb.d/
 EXPOSE 3306
-# (No CMD needed; default ENTRYPOINT starts mysqld)
+# Default ENTRYPOINT from image starts mysqld
 DOC
 
 cat > my.cnf <<"DAT"
 [mysqld]
 user=mysql
-bind-address=0.0.0.0       # allow remote connections (not just localhost):contentReference[oaicite:3]{index=3}
-skip-name-resolve          # added: prevent DNS reverse-lookup of client host
+bind-address=0.0.0.0
+skip-name-resolve
 port=3306
 socket=/run/mysqld/mysqld.sock
 datadir=/var/lib/mysql
@@ -24,54 +24,48 @@ skip-networking=0
 DAT
 
 cat > init.sql <<"SQL"
+-- HOSPITAL DATABASE + USERS/DOCTORS TABLES
+
 CREATE DATABASE IF NOT EXISTS hospital;
 
+-- main db user used by PHP in containers
 CREATE USER IF NOT EXISTS 'hospital_user'@'%' IDENTIFIED BY 'hospital_pass';
 GRANT ALL PRIVILEGES ON hospital.* TO 'hospital_user'@'%';
 
-CREATE USER IF NOT EXISTS 'hospital_user'@'arnas-webserver-vm-arba1037.cloud' IDENTIFIED BY 'hospital_pass';  # added host-specific user
-GRANT ALL PRIVILEGES ON hospital.* TO 'hospital_user'@'arnas-webserver-vm-arba1037.cloud';            # grant for that hostname
+-- optional host-specific user (if they ever use hostname instead of IP)
+CREATE USER IF NOT EXISTS 'hospital_user'@'arnas-webserver-vm-arba1037.cloud' IDENTIFIED BY 'hospital_pass';
+GRANT ALL PRIVILEGES ON hospital.* TO 'hospital_user'@'arnas-webserver-vm-arba1037.cloud';
 
 FLUSH PRIVILEGES;
+
 USE hospital;
 
-CREATE TABLE IF NOT EXISTS patients (
+-- USERS table (for normal users)
+CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    full_name VARCHAR(255),
-    email VARCHAR(255),
-    password VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    user VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL
 );
 
+-- DOCTORS table
 CREATE TABLE IF NOT EXISTS doctors (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255),
-    speciality VARCHAR(255),
-    schedule VARCHAR(255),
-    password VARCHAR(255)
-);
-
-CREATE TABLE IF NOT EXISTS appointments (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    patient_id INT,
-    doctor_id INT,
-    appointment_time DATETIME,
-    FOREIGN KEY (patient_id) REFERENCES patients(id),
-    FOREIGN KEY (doctor_id) REFERENCES doctors(id)
+    user VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL
 );
 SQL
 
 cat > docker-compose.yml <<"COM"
+version: "3.9"
 services:
   mariadb:
     build: .
-    image: mariadb:10.11   # use the official image
     container_name: hospital_db
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: hospital      # new: create 'hospital' database
-      MYSQL_USER: hospital_user     # new: create 'hospital_user'
-      MYSQL_PASSWORD: hospital_pass # new: set 'hospital_user' password
+      MYSQL_DATABASE: hospital
+      MYSQL_USER: hospital_user
+      MYSQL_PASSWORD: hospital_pass
     ports:
       - "3306:3306"
     volumes:
@@ -80,3 +74,7 @@ volumes:
   db_data:
 COM
 
+COM
+--- FORCE INIT.SQL TO RUN EVERY TIME ---
+docker compose down -v || true
+docker compose up -d
