@@ -41,7 +41,7 @@ cat > natovm.yml << "BMW"
     - name: sukuriu NATOOOO private ip variable
       set_fact:
         nato_private_ip: "{{ vm_natas.stdout_lines | select('search', 'PRIVATE_IP') | list | first | split('=') | last | replace('\"', '') | trim }}" 
-        # FIRST - > PRIVATE_IP="10.0.1.98"  split(=) TAMPA ->   PRIVATE_IP , "10.0.1.98" last - > pasiima TIK "10.0.1.98" ir trim nuiima kabutes IR IRASO  || nato_private_ip=10.0.1.98 ||
+        #  || FIRST -> || PRIVATE_IP="10.0.1.98" ||  split(=) TAMPA -> ||  [ PRIVATE_IP,"10.0.1.98" ] || last - > pasiima TIK "10.0.1.98"  || ir trim nuiima kabutes ir galiausiai gaunam  || nato_private_ip=10.0.1.98 ||
 
     - name: nato  private IP i txt faila
       copy:
