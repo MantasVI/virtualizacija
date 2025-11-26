@@ -11,8 +11,8 @@ source ./kurimas1vm.sh 				# sukuria ANSIBLE VM NAUDOJANT BASH !!!
 
 $CSSH_CON  'bash -s' < 1.ansiInstall.sh  #1. atsiuncia ansible ir ansible galaxy collections
 
-$CSSH_CON 'bash -s' < failai.sh
-$CSSH_CON 'bash -s' < failas2.sh
+$CSSH_CON 'bash -s' < webstack.sh
+$CSSH_CON 'bash -s' < db_setup.sh
 
 $CSSH_CON 'bash -s' < 2.vault.sh    #2. cia failas kuriame yra visu musu open nebula passai juos encryptina
 				    #2. todel visi playbookams (9.playbookai.sh) turi buti duodami passai

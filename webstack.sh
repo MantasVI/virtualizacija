@@ -1,5 +1,5 @@
 #!/bin/bash
-
+a
 mkdir -p /home/mavi1016/.ansible/webstack/app
 cd /home/mavi1016/.ansible/webstack/app
 
