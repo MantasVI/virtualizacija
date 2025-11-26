@@ -47,14 +47,4 @@ cat > arnovm.yml << "BMW"
         dest: /home/mavi1016/.ansible/arno_ip.txt
         content: "{{ arno_private_ip }}"
 
-    - name: Copy Ansible SSH key to Arnas VM
-      ansible.builtin.authorized_key:
-        user: mavi1016
-        key: "{{ lookup('file', '/home/mavi1016/.ssh/id_ed25519.pub') }}"
-        state: present
-      vars:
-        ansible_user: arba1037
-        ansible_host: "{{ arno_private_ip }}"
-        ansible_ssh_private_key_file: /mavi1016/.ssh/id_ed25519
-      delegate_to: localhost
 BMW
