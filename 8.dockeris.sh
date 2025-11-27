@@ -52,10 +52,7 @@ cat > docker.yml << "DOC"
         state: latest
         update_cache: yes
 
-#install gui and chrome inside nato vm
-# ===============================================================
-# CLIENT VM — Minimal GUI + XRDP + Firefox
-# ===============================================================
+
 # ===============================================================
 # CLIENT VM – GUI + XRDP + Firefox + Auto-session Fix
 # ===============================================================
