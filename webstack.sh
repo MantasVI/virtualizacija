@@ -376,7 +376,7 @@ EOF
 # ======================
 # doctor_list.php – list doctors
 # ======================
-cat > doctor_list.php <<"EOF"
+cat > doctor_list.php <<"EOF"  # legit kai apsilankai atprintina visus daktarus. thats it.  
 <?php
 require 'config.php';
 
@@ -421,13 +421,12 @@ cat > doctor_search.php <<"EOF"
 <?php
 require 'config.php';
 
-$q = trim($_GET['q'] ?? "");
+$q = trim($_GET['q'] ?? ""); #CIA YRA KA TU IRASAI IESKAI PVZ DAKTARO TAI VISAS TSA INPUT ISSAUGOMAS $q VARIABLE
 
-if ($q === "") {
+if ($q === "") {     #ar ka ivedei tuscia? jei tuscia nieko nerodo
     $result = false;
 } else {
-    $qEsc = mysqli_real_escape_string($conn, $q);
-    $sql = "SELECT * FROM doctors WHERE user LIKE '%$qEsc%'";
+    $sql = "SELECT * FROM doctors WHERE user LIKE '%$qEsc%'"; # cia krc is database ismeta visus doctors JEI kas panasus i ka ivedei ( '%$qEsc%' ) 
     $result = mysqli_query($conn, $sql);
 }
 ?>
@@ -449,23 +448,23 @@ if ($q === "") {
     <a href="doctor_index.php">Doctor home</a>
 </p>
 
-<?php if ($q !== ""): ?>
+<?php if ($q !== ""): ?>    #tikrinam ar ka irasei nera tuscia jei nera
     <h3>Results:</h3>
-    <?php if ($result && mysqli_num_rows($result) > 0): ?>
+    <?php if ($result && mysqli_num_rows($result) > 0): ?>    tikrinam ar ka ivedei yra database 
         <table border="1" cellpadding="5">
             <tr>
                 <th>ID</th>
                 <th>Username</th>
             </tr>
-            <?php while ($row = mysqli_fetch_assoc($result)): ?>
+            <?php while ($row = mysqli_fetch_assoc($result)): ?> isprintina daktaro id ir username
             <tr>
                 <td><?php echo $row['id']; ?></td>
-                <td><?php echo htmlspecialchars($row['user']); ?></td>
+                <td><?php echo htmlspecialchars($row['user']); ?></td> 
             </tr>
             <?php endwhile; ?>
         </table>
     <?php else: ?>
-        <p>No doctors found.</p>
+        <p>No doctors found.</p> #jei nera databeise 
     <?php endif; ?>
 <?php endif; ?>
 
@@ -476,11 +475,11 @@ EOF
 # ======================
 # doctor_schedule.php – simple weekly schedule (calendar-like table)
 # ======================
-cat > doctor_schedule.php <<"EOF"
+cat > doctor_schedule.php <<"EOF"  
 <?php
 require 'config.php';
 
-if (empty($_SESSION["doctor_id"])) {
+if (empty($_SESSION["doctor_id"])) {         #ar yra prisijunges daktaras jei ne i login page jei taip tai tsg isprintina jo work hours 
     header("Location: doctor_login.php");
     exit;
 }
@@ -519,42 +518,45 @@ EOF
 # ======================
 cat > patient_card.php <<"EOF"
 <?php
-require 'config.php';
+require 'config.php';    # prisijungiam database ir leidzia naudoti $_SESSION visur
 
-if (empty($_SESSION["id"])) {
+if (empty($_SESSION["id"])) {    # jei useris neprisijungęs, nukreipia į login puslapį.
     header("Location: login.php");
     exit;
 }
 
-$patient_id = $_SESSION["id"];
+$patient_id = $_SESSION["id"];    #išsaugome paciento ID, kad žinotume, kieno kortelė.
 
 // handle save
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $age        = $_POST['age'] !== '' ? (int)$_POST['age'] : null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {    #tikrina, ar buvo paspaustas “Save” mygtukas.
+    $age = $_POST['age'] !== '' ? (int)$_POST['age'] : null;    #ar ivestas buvo ivesta kazkas jei ne lieka tuscia jei taip tai sukuriamas patient card su sitais values kuriuos ivedem
+
+    // enforce age between 1 and 99
+    if ($age !== null && ($age < 1)) {
+        $age = null;
+    }
+
     $blood_type = $_POST['blood_type'] ?? '';
     $allergies  = $_POST['allergies'] ?? '';
     $notes      = $_POST['notes'] ?? '';
 
-    // check if card exists
-    $check = mysqli_query($conn, "SELECT patient_id FROM patient_card WHERE patient_id = $patient_id");
-    if ($check && mysqli_num_rows($check) > 0) {
+  
+    $check = mysqli_query($conn, "SELECT patient_id FROM patient_card WHERE patient_id = $patient_id");  #ar turi patient card useris?
+    if ($check && mysqli_num_rows($check) > 0) {   #patikrina ar dabartinis pacientas turi susikures pateint card jei turi tai mes ji tik paupdeitinam jie neturi sukuriam 
         // update
-        $stmt = mysqli_prepare($conn, "UPDATE patient_card SET age = ?, blood_type = ?, allergies = ?, notes = ? WHERE patient_id = ?");
-        mysqli_stmt_bind_param($stmt, "isssi", $age, $blood_type, $allergies, $notes, $patient_id);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
+        $sql = "UPDATE patient_card SET age = $age, blood_type = '$blood_type', allergies = '$allergies', notes = '$notes' WHERE patient_id = $patient_id";
+        mysqli_query($conn, $sql); #issiunciam i database
     } else {
         // insert
-        $stmt = mysqli_prepare($conn, "INSERT INTO patient_card (patient_id, age, blood_type, allergies, notes) VALUES (?, ?, ?, ?, ?)");
-        mysqli_stmt_bind_param($stmt, "iisss", $patient_id, $age, $blood_type, $allergies, $notes);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
+        $sql = "INSERT INTO patient_card (patient_id, age, blood_type, allergies, notes)
+                VALUES ($patient_id, $age, '$blood_type', '$allergies', '$notes')";
+        mysqli_query($conn, $sql);  #issiunciam i database
     }
 }
 
 // load card
-$card_res = mysqli_query($conn, "SELECT * FROM patient_card WHERE patient_id = $patient_id");
-$card = $card_res && mysqli_num_rows($card_res) > 0 ? mysqli_fetch_assoc($card_res) : null;
+$card_res = mysqli_query($conn, "SELECT * FROM patient_card WHERE patient_id = $patient_id"); #parodom patient card
+$card = $card_res && mysqli_num_rows($card_res) > 0 ? mysqli_fetch_assoc($card_res) : null; jei yra bent 1 toks pacientas tai parodom  jo patient card info 
 ?>
 <!DOCTYPE html>
 <html>
@@ -591,6 +593,7 @@ $card = $card_res && mysqli_num_rows($card_res) > 0 ? mysqli_fetch_assoc($card_r
 
 </body>
 </html>
+
 EOF
 
 # ======================
@@ -608,72 +611,40 @@ if (empty($_SESSION["id"])) {
 $patient_id = $_SESSION["id"];
 $message = "";
 
-// get list of doctors
+// gauti gydytojų sąrašą
 $doctors_res = mysqli_query($conn, "SELECT id, user FROM doctors ORDER BY user");
 
-// Handle form submit
+// jei forma buvo pateikta
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $doctor_id = (int)($_POST['doctor_id'] ?? 0);
-    $date      = $_POST['date'] ?? '';
-    $time      = $_POST['time'] ?? '';
+    $doctor_id = (int)$_POST['doctor_id'];
+    $date      = $_POST['date'];
+    $time      = $_POST['time'];
 
+    // ar visi laukeliai įvesti
     if ($doctor_id <= 0 || $date === '' || $time === '') {
-        $message = "All fields are required.";
+        $message = "Užpildyk visus laukus.";
     } else {
-        $stmt = mysqli_prepare($conn,
-            "INSERT INTO appointments (patient_id, doctor_id, date, time)
-             VALUES (?, ?, ?, ?)"
+        // patikrinti ar daktaras turi appointment tuo metu
+        $check = mysqli_query(
+            $conn,
+            "SELECT id FROM appointments 
+             WHERE doctor_id = $doctor_id AND date = '$date' AND time = '$time'"
         );
-        mysqli_stmt_bind_param($stmt, "iiss", $patient_id, $doctor_id, $date, $time);
-        if (mysqli_stmt_execute($stmt)) {
-            $message = "Appointment booked.";
+
+        if (mysqli_num_rows($check) > 0) {
+            $message = "Gydytojas tuo metu jau užimtas.";
         } else {
-            $message = "Error booking appointment.";
+            // įrašyti naują appointment
+            mysqli_query(
+                $conn,
+                "INSERT INTO appointments (patient_id, doctor_id, date, time) 
+                 VALUES ($patient_id, $doctor_id, '$date', '$time')"
+            );
+            $message = "Vizitas sėkmingai užregistruotas.";
         }
-        mysqli_stmt_close($stmt);
     }
 }
 ?>
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Book Appointment</title>
-</head>
-<body>
-<h2>Book Appointment with Doctor</h2>
-
-<p><a href="index.php">Back to user home</a></p>
-
-<?php if ($message): ?>
-    <p><?php echo htmlspecialchars($message); ?></p>
-<?php endif; ?>
-
-<form method="post" action="">
-    <label>Doctor:</label><br>
-    <select name="doctor_id" required>
-        <option value="">-- choose doctor --</option>
-        <?php
-        // get fresh list again
-        $doctors_res = mysqli_query($conn, "SELECT id, user FROM doctors ORDER BY user");
-        while ($d = mysqli_fetch_assoc($doctors_res)):
-        ?>
-            <option value="<?php echo $d['id']; ?>">
-                <?php echo htmlspecialchars($d['user']); ?>
-            </option>
-        <?php endwhile; ?>
-    </select><br><br>
-
-    <label>Date:</label><br>
-    <input type="date" name="date" required><br><br>
-
-    <label>Time:</label><br>
-    <input type="time" name="time" required><br><br>
-
-    <button type="submit">Book</button>
-</form>
-
-</body>
-</html>
 EOF
 
 # ======================
@@ -758,13 +729,11 @@ $patient_id = $_SESSION["id"];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = (int)($_POST['id'] ?? 0);
+
     if ($id > 0) {
-        $stmt = mysqli_prepare($conn,
-            "DELETE FROM appointments WHERE id = ? AND patient_id = ?"
-        );
-        mysqli_stmt_bind_param($stmt, "ii", $id, $patient_id);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
+        // paprastas delete, be sql injection apsaugos
+        mysqli_query($conn, "DELETE FROM appointments 
+                             WHERE id = $id AND patient_id = $patient_id");
     }
 }
 
