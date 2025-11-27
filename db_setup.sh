@@ -32,11 +32,11 @@ CREATE DATABASE IF NOT EXISTS hospital;
 
 -- main db user used by PHP in containers
 CREATE USER IF NOT EXISTS 'hospital_user'@'%' IDENTIFIED BY 'hospital_pass';        #MariaDB vartotojas, kurį PHP naudos prisijungti prie DB
-GRANT ALL PRIVILEGES ON hospital.* TO 'hospital_user'@'%'
+GRANT ALL PRIVILEGES ON hospital.* TO 'hospital_user'@'%'                        
 
-FLUSH PRIVILEGES;
+FLUSH PRIVILEGES;        #atnaujink privilegijas
 
-USE hospital;
+USE hospital;            #naudok dbr sita database
 
 -- USERS table (for normal users / patients)
 CREATE TABLE IF NOT EXISTS users (
@@ -88,12 +88,12 @@ services:    #kokius konteinerius paleisti?
     ports:
       - "3306:3306"                #leidzia belekam jungtis and sito porto
     volumes:
-      - db_data:/var/lib/mysql        #issaugo visus init.sql failus i db_data
+      - db_data:/var/lib/mysql        #issaugo visa init.sql data i db_data
 volumes:
   db_data:    #laiko visus duomenis cia jeigu conteineris issijungtu kad jie neissitrintu
 COM
 
 COM
 --- FORCE INIT.SQL TO RUN EVERY TIME ---
-docker compose down -v || true
-docker compose up -d
+docker compose down -v || true            #pilnai viska whipina 
+docker compose up -d        #isnaujo viskas paleidziama ir susukuria tuscais naujas database
