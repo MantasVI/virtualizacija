@@ -1,5 +1,5 @@
 #!/bin/bash
-a
+
 cd /home/mavi1016/.ansible/
 
 cat > host.yml << "BMW"    #SIS FAILAS BUS PALEISTAS 9.PLAYBOOKAI.SH 
