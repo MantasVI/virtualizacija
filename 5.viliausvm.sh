@@ -1,5 +1,5 @@
 #!/bin/bash
-a
+
 cd /home/mavi1016/.ansible/
 
 cat > viliausvm.yml << "BMW"
