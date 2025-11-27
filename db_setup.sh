@@ -93,7 +93,3 @@ volumes:
   db_data:    #laiko visus duomenis cia jeigu conteineris issijungtu kad jie neissitrintu
 COM
 
-COM
---- FORCE INIT.SQL TO RUN EVERY TIME ---
-docker compose down -v || true            #pilnai viska whipina 
-docker compose up -d        #isnaujo viskas paleidziama ir susukuria tuscais naujas database
