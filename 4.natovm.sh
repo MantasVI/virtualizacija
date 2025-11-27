@@ -33,11 +33,20 @@ cat > natovm.yml << "BMW"
     - name: Rodyti formatuotą VM informaciją
       debug:
         msg:
+<<<<<<< HEAD
           - "{{ vm_natas.stdout_lines | select('search', 'CONNECT_INFO1') | list }}"  #suranda || CONNECT_INFO="ssh -p 5681 naka1314@193.219.91.103" ||
           - "{{ vm_natas.stdout_lines | select('search', 'PUBLIC_IP') | list }}" #suranda  || PUBLIC_IP="193.219.91.103" ||
           - "{{ vm_natas.stdout_lines | select('search', 'PRIVATE_IP') | list }}" #suranda || PRIVATE_IP="10.0.1.98" ||
           - "{{ vm_natas.stdout_lines | select('search', 'TCP_PORT_FORWARDING') | list }}"  (nu krc taspats formatas tng as )
           
+=======
+          - "{{ vm_natas.stdout_lines | select('search', 'CONNECT_INFO1') | list }}"
+          - "{{ vm_natas.stdout_lines | select('search', 'PUBLIC_IP') | list }}"
+          - "{{ vm_natas.stdout_lines | select('search', 'PRIVATE_IP') | list }}"
+          - "{{ vm_natas.stdout_lines | select('search', 'TCP_PORT_FORWARDING') | list }}"
+          - "{{ vm_natas.stdout_lines | select('search', 'CONNECT_INFO4') | list }}"
+    
+>>>>>>> 0db614e (paskutines versija veikia clientas , database, webserver tarpusavije)
     - name: sukuriu NATOOOO private ip variable
       set_fact:
         nato_private_ip: "{{ vm_natas.stdout_lines | select('search', 'PRIVATE_IP') | list | first | split('=') | last | replace('\"', '') | trim }}" 

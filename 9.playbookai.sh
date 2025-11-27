@@ -5,6 +5,7 @@ cd /home/mavi1016/.ansible
 sudo apt install sshpass
 
 ansible-playbook --vault-password-file vault.txt ymlkurimas.yml
+ansible-playbook --vault-password-file vault.txt dovydovm.yml
 ansible-playbook --vault-password-file vault.txt natovm.yml
 ansible-playbook --vault-password-file vault.txt viliausvm.yml
 ansible-playbook --vault-password-file vault.txt arnovm.yml

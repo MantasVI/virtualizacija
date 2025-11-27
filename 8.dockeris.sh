@@ -52,6 +52,84 @@ cat > docker.yml << "DOC"
         state: latest
         update_cache: yes
 
+#install gui and chrome inside nato vm
+# ===============================================================
+# CLIENT VM — Minimal GUI + XRDP + Firefox
+# ===============================================================
+# ===============================================================
+# CLIENT VM – GUI + XRDP + Firefox + Auto-session Fix
+# ===============================================================
+- name: Setup client GUI + RDP
+  hosts: client
+  become: yes
+
+  tasks:
+
+    - name: Ensure client user exists
+      user:
+        name: naka1314
+        state: present
+        shell: /bin/bash
+
+    - name: Ensure home directory exists
+      file:
+        path: /home/naka1314
+        state: directory
+        owner: naka1314
+        group: naka1314
+        mode: '0755'
+
+    - name: Initialize Xorg session files (fixes XRDP login)
+      shell: |
+        sudo -u naka1314 mkdir -p /home/naka1314/.config
+        sudo -u naka1314 mkdir -p /home/naka1314/.local
+        sudo -u naka1314 mkdir -p /home/naka1314/.cache
+        sudo -u naka1314 touch /home/naka1314/.Xauthority
+      args:
+        executable: /bin/bash
+
+    - name: Preselect lightdm to avoid installer freeze
+      shell: |
+        echo "lightdm shared/default-x-display-manager select lightdm" | debconf-set-selections
+
+    - name: Force XRDP to use LXDE
+      copy:
+        dest: /home/naka1314/.xsession
+        content: "lxsession\n"
+        owner: naka1314
+        group: naka1314
+        mode: "0755"
+
+    - name: Install LXDE + XRDP + Firefox (FAST GUI)
+      apt:
+        name:
+          - lxde
+          - xrdp
+          - firefox # correct package for Debian 12
+        state: present
+        update_cache: yes
+
+    - name: Enable XRDP service
+      systemd:
+        name: xrdp
+        enabled: yes
+        state: started
+
+    - name: Add user to ssl-cert group (required for XRDP)
+      user:
+        name: naka1314
+        groups: ssl-cert
+        append: yes
+
+    - name: Restart XRDP
+      systemd:
+        name: xrdp
+        state: restarted
+
+    - name: Reboot VM
+      reboot:
+        msg: "Rebooting to activate GUI + XRDP"
+        reboot_timeout: 300
 # ===============================================================
 # DEPLOY DATABASE ON VILIUS
 # ===============================================================
@@ -104,3 +182,4 @@ cat > docker.yml << "DOC"
       args:
         executable: /bin/bash
 DOC
+

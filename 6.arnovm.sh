@@ -1,5 +1,5 @@
 #!/bin/bash
-a
+
 cd /home/mavi1016/.ansible/
 
 cat > arnovm.yml << "BMW"
@@ -37,7 +37,7 @@ cat > arnovm.yml << "BMW"
           - "{{ vm_arnas.stdout_lines | select('search', 'PUBLIC_IP') | list }}"
           - "{{ vm_arnas.stdout_lines | select('search', 'PRIVATE_IP') | list }}"
           - "{{ vm_arnas.stdout_lines | select('search', 'TCP_PORT_FORWARDING') | list }}"
-
+    
     - name: sukuriu ARNOOOO private ip variable
       set_fact:
         arno_private_ip: "{{ vm_arnas.stdout_lines | select('search', 'PRIVATE_IP') | list | first | split('=') | last | replace('\"', '') | trim }}"

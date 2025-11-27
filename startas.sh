@@ -26,6 +26,8 @@ $CSSH_CON 'bash -s' < 5.viliausvm.sh
 
 $CSSH_CON 'bash -s' < 6.arnovm.sh 
 
+$CSSH_CON 'bash -s' < 6.1.dovydovm.sh
+
 $CSSH_CON 'bash -s' < 7.hostas.sh   # 7.  suranda kur yra KIEKVIENO PRIVATE IP txt failas issaugotas, pritaiko tai i variable ir ji ideda i host faila
 
 
