@@ -5,16 +5,16 @@ cd /home/mavi1016/.ansible/webstack/app
 # ======================
 # config.php – HOSPITAL DB (VILIAUS)
 # ======================
-cat > config.php <<"EOF"
+cat > config.php <<"EOF"    # is a reusable database connection file.
 <?php
-session_start();
+session_start();    #session_start() – starts a session for the user, giving them a unique session ID. This session lets you store their user-specific data (like user_id) so they only see their own info.
 
-$host = getenv('DB_HOST');        // from .env (Viliaus private IP)
-$db   = getenv('DB_NAME');        // hospital
+$host = getenv('DB_HOST');        // from .env (Viliaus private IP)          getenv() – reads the database credentials from environment variables (DB_HOST, DB_NAME, DB_USER, DB_PASSWORD). This avoids hardcoding passwords in your PHP code.      
+$db   = getenv('DB_NAME');        // hospital    
 $user = getenv('DB_USER');        // hospital_user
 $pass = getenv('DB_PASSWORD');    // hospital_pass
 
-$conn = mysqli_connect($host, $user, $pass, $db);
+$conn = mysqli_connect($host, $user, $pass, $db);   $conn = mysqli_connect(...) – uses the above variables to connect to your MariaDB database. $conn is the connection handle used in queries.
 
 if (!$conn) {
     die("could not connect to hospital database!");
@@ -27,13 +27,13 @@ EOF
 # ======================
 cat > index.php <<"EOF"
 <?php
-require 'config.php';
-if (!empty($_SESSION["id"])) {
-    $id = $_SESSION["id"];
+require 'config.php';   
+if (!empty($_SESSION["id"])) {    #Patikrina sesiją: if (!empty($_SESSION["id"])) → ar vartotojas yra prisijungęs.
+    $id = $_SESSION["id"];                #Gautų duomenų paieška: Jei prisijungęs, iš duomenų bazės paima visą eilutę iš users lentelės pagal $id.
     $result = mysqli_query($conn, "SELECT * FROM users WHERE id = $id");
-    $row = mysqli_fetch_assoc($result);
+    $row = mysqli_fetch_assoc($result);    #Asociatyvus masyvas: mysqli_fetch_assoc($result) paverčia eilutę į asociatyvų masyvą, kad galėtum naudoti $row["user"], $row["password"] ir t.t.
 } else {
-    header("Location: login.php");
+    header("Location: login.php");    #nera id reiskia logginink
     exit;
 }
 ?>
@@ -44,7 +44,7 @@ if (!empty($_SESSION["id"])) {
     <title>User Home</title>
 </head>
 <body>
-    <h1>Welcome <?php echo htmlspecialchars($row["user"]); ?></h1>
+    <h1>Welcome <?php echo htmlspecialchars($row["user"]); ?></h1>        #turi id imeta tave i userio page
 
     <p>
         <a href="logout.php">LOGOUT</a>
@@ -77,25 +77,25 @@ cat > login.php <<"EOF"
 <?php
 require 'config.php';
 
-if (isset($_POST["username"])) {
+if (isset($_POST["username"])) {        #ar uzpildytas ir username ir password ? 
     $username = $_POST["username"];
     $password = $_POST["password"];
 
-    $result = mysqli_query($conn, "SELECT * FROM users WHERE user = '$username'");
-    $row    = mysqli_fetch_assoc($result);
+    $result = mysqli_query($conn, "SELECT * FROM users WHERE user = '$username'");    #patikrina ar yra toksai username database?
+    $row    = mysqli_fetch_assoc($result);    #padaro assocaitive array    row['user'] row['id'] row['password'] 
 
-    if (mysqli_num_rows($result) > 0) {
+    if (mysqli_num_rows($result) > 0) {         # ar egzistuoja database? jei taip tikrina ar ivestas passwordas atitinka database passworda jei atitinka ($_session[id] = userio id stores the user’s unique ID in the session so other pages know which user is logged in.) ir nukreipia i  index.php kuris yra tsg user page
         // PLAIN TEXT PASSWORD CHECK – EXACTLY LIKE YOUR ORIGINAL
         if ($password == $row["password"]) {
             $_SESSION["login"] = true;
-            $_SESSION["id"]    = $row["id"];
+            $_SESSION["id"]  = $row["id"]; 
             header("Location: index.php");
             exit;
         } else {
-            echo "wrong password";
+            echo "wrong password"; # jei slaptazodis nesutampa 
         }
     } else {
-        echo "not registered";
+        echo "not registered"; # jeigu mysqli_num_rows($result) = 0 aka vps nera tokio userio database
     }
 }
 ?>
@@ -132,10 +132,10 @@ EOF
 cat > logout.php <<"EOF"
 <?php
 require 'config.php';
-$_SESSION = [];
-session_unset();
-session_destroy();
-header("Location: login.php");
+$_SESSION = [];    #Empties the session array ($_SESSION = []) → no stored data left.
+session_unset();   #frees session memory
+session_destroy();  #deletes session 
+header("Location: login.php"); #relocates the user to the login page
 exit;
 ?>
 EOF
