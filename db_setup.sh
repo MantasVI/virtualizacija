@@ -1,5 +1,5 @@
 #!/bin/bash
-a
+
 mkdir -p /home/mavi1016/.ansible/dbstack
 cd /home/mavi1016/.ansible/dbstack
 
