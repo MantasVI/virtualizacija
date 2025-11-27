@@ -145,25 +145,25 @@ EOF
 # ======================
 cat > registration.php <<"EOF"
 <?php
-require 'config.php';
+require 'config.php'; #loads the database connection
 
-if (!empty($_SESSION["id"])) {
+if (!empty($_SESSION["id"])) {        #ar sessijos id tuscias? jei ne tai reiskias useris prisijunges ir ji grazinam i user page 
     header("Location: index.php");
     exit;
 }
 
 if (isset($_POST["submit"])) {
-    $username  = $_POST["username"];
-    $password  = $_POST["password"];
+    $username  = $_POST["username"]; #ka irase i username lentele
+    $password  = $_POST["password"];  #ka irase i password lentele
 
-    $duplicate = mysqli_query($conn, "SELECT * FROM users WHERE user = '$username'");
-    if (mysqli_num_rows($duplicate) > 0) {
+    $duplicate = mysqli_query($conn, "SELECT * FROM users WHERE user = '$username'");  #ar egzistuoja toks username database?
+    if (mysqli_num_rows($duplicate) > 0) { #jei egzistuoja
         echo "username taken";
-    } else {
-        if (!empty($username) && !empty($password)) {
+    } else { #jei ne 
+        if (!empty($username) && !empty($password)) { #ar ir passwordas ir username ivestas?
             // PLAIN TEXT – EXACTLY LIKE YOUR ORIGINAL
             $query = "INSERT INTO users (user, password) VALUES ('$username', '$password')";
-            mysqli_query($conn, $query);
+            mysqli_query($conn, $query); #issiunciu sukurta insert query i database.
             echo "registration successful";
         } else {
             echo "registration failed";
@@ -181,10 +181,10 @@ if (isset($_POST["submit"])) {
     <form action="<?php $_SERVER["PHP_SELF"] ?>" method="post">
         <h2>Welcome to the Linux hospital – User registration</h2>
         username:<br>
-        <input type="text" name="username"><br>
+        <input type="text" name="username"><br>  #$username = # $_POST[username] is cia kyla
         password:<br>
-        <input type="password" name="password"><br>
-        <input type="submit" name="submit" value="register"><br>
+        <input type="password" name="password"><br>    #$password = # $_POST[password] is cia kyla
+        <input type="submit" name="submit" value="register"><br>     #isset(submit) is cia
         <a href="login.php">User login</a><br>
         <a href="doctor_login.php">Doctor login</a> |
         <a href="doctor_registration.php">Doctor registration</a>
@@ -198,22 +198,22 @@ EOF
 # ======================
 cat > doctor_login.php <<"EOF"
 <?php
-require 'config.php';
+require 'config.php'; #reikalingas database 
 
-if (isset($_POST["username"])) {
-    $username = $_POST["username"];
-    $password = $_POST["password"];
+if (isset($_POST["username"])) {  #cia legit same shit kaip submit 
+    $username = $_POST["username"];    #ivesti duomenys username
+    $password = $_POST["password"];    #ivesti duomenys password
 
-    $result = mysqli_query($conn, "SELECT * FROM doctors WHERE user = '$username'");
-    $row    = mysqli_fetch_assoc($result);
+    $result = mysqli_query($conn, "SELECT * FROM doctors WHERE user = '$username'");  istraukia is database info apie username 
+    $row    = mysqli_fetch_assoc($result); #istraukia values apie ta username $row["id"], $row["user"], $row["password"]
 
-    if (mysqli_num_rows($result) > 0) {
+    if (mysqli_num_rows($result) > 0) {    #ar yra toks useris database? jei yra tada tikrina ar passwordas atitinka database passworda
         // PLAIN TEXT
         if ($password == $row["password"]) {
-            $_SESSION["doctor_login"] = true;
-            $_SESSION["doctor_id"]    = $row["id"];
-            $_SESSION["doctor_user"]  = $row["user"];
-            header("Location: doctor_index.php");
+            $_SESSION["doctor_login"] = true; #CIA KRC TSG TIKRINS AND KIEKVIENO DOCTOR PAGE AR PRISIJUNGES 
+            $_SESSION["doctor_id"]    = $row["id"];  #leidzia identifikuoti koks doctor prisijunges nes kiekvienas useris ir doctor turi skirtinga id
+            $_SESSION["doctor_user"]  = $row["user"]; #cia tai tsg displaying varda daktaro kinda useless
+            header("Location: doctor_index.php"); #nusiuncia daktara i doctor page
             exit;
         } else {
             echo "wrong password";
@@ -253,7 +253,7 @@ EOF
 # ======================
 # doctor_registration.php – create doctor in hospital.doctors
 # ======================
-cat > doctor_registration.php <<"EOF"
+cat > doctor_registration.php <<"EOF"  # 1 : 1 kaip useriams registracija
 <?php
 require 'config.php';
 
@@ -309,22 +309,22 @@ EOF
 cat > doctor_index.php <<"EOF"
 <?php
 require 'config.php';
-if (empty($_SESSION["doctor_id"])) {
+if (empty($_SESSION["doctor_id"])) {  # ar gydytojas prisijunges ? jei ne tai nukreipia ji i doctor logina
     header("Location: doctor_login.php");
     exit;
 }
-$doctor_id   = $_SESSION["doctor_id"];
-$doctor_name = isset($_SESSION["doctor_user"]) ? $_SESSION["doctor_user"] : "Doctor";
+$doctor_id   = $_SESSION["doctor_id"]; # issaugo daktaro sesijos id
+$doctor_name = isset($_SESSION["doctor_user"]) ? $_SESSION["doctor_user"] : "Doctor"; #parodo daktaro varda 
 
 // fetch appointments for this doctor
-$app_sql = "
-    SELECT a.id, a.date, a.time, u.user AS patient_user
+$app_sql = "                                    # cai tsg is user lenteles istraukia varda data laika kada turi appointmenta [mantas 25-01-01 18.30]
+    SELECT a.id, a.date, a.time, u.user AS patient_user 
     FROM appointments a
     JOIN users u ON a.patient_id = u.id
     WHERE a.doctor_id = $doctor_id
     ORDER BY a.date, a.time
 ";
-$app_res = mysqli_query($conn, $app_sql);
+$app_res = mysqli_query($conn, $app_sql); # ta querry issiuncia i database $conn
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -341,7 +341,7 @@ $app_res = mysqli_query($conn, $app_sql);
     <hr>
 
     <h3>My appointments</h3>
-    <?php if ($app_res && mysqli_num_rows($app_res) > 0): ?>
+    <?php if ($app_res && mysqli_num_rows($app_res) > 0): ?>  # AR YRA BENT 1 SUSITIKIMAS RODYTU SU KUO KITAIP NO APPINTMENTS
         <table border="1" cellpadding="5">
             <tr>
                 <th>Date</th>
@@ -350,7 +350,7 @@ $app_res = mysqli_query($conn, $app_sql);
             </tr>
             <?php while ($r = mysqli_fetch_assoc($app_res)): ?>
                 <tr>
-                    <td><?php echo htmlspecialchars($r['date']); ?></td>
+                    <td><?php echo htmlspecialchars($r['date']); ?></td>    #atprintima 1 userio data laika ir jo varda
                     <td><?php echo htmlspecialchars($r['time']); ?></td>
                     <td><?php echo htmlspecialchars($r['patient_user']); ?></td>
                 </tr>
