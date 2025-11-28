@@ -603,19 +603,19 @@ cat > book_appointment.php <<"EOF"
 <?php
 require 'config.php';
 
-if (empty($_SESSION["id"])) {
+if (empty($_SESSION["id"])) {         # ar yra useris prisijunges? 
     header("Location: login.php");
     exit;
 }
 
-$patient_id = $_SESSION["id"];
+$patient_id = $_SESSION["id"];        # issaugom paciento id nes pagal tai zinosim kam appointmentas
 $message = "";
 
 // gauti gydytojų sąrašą
-$doctors_res = mysqli_query($conn, "SELECT id, user FROM doctors ORDER BY user");
+$doctors_res = mysqli_query($conn, "SELECT id, user FROM doctors ORDER BY user");    # gauname gydytoju sarasa
 
 // jei forma buvo pateikta
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {    # jei doctor_id, date ir time buvo uzpildyti ir mygtukas pateikti paspaustas
     $doctor_id = (int)$_POST['doctor_id'];
     $date      = $_POST['date'];
     $time      = $_POST['time'];
@@ -645,6 +645,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Book Appointment</title>
+</head>
+<body>
+<h2>Book Appointment with Doctor</h2>
+
+<p><a href="index.php">Back to user home</a></p>
+
+<?php if ($message): ?>
+    <p><?php echo htmlspecialchars($message); ?></p>
+<?php endif; ?>
+
+<form method="post" action="">
+    <label>Doctor:</label><br>
+    <select name="doctor_id" required>
+        <option value="">-- choose doctor --</option>
+        <?php
+       
+        while ($d = mysqli_fetch_assoc($doctors_res)):
+        ?>
+            <option value="<?php echo $d['id']; ?>">
+                <?php echo htmlspecialchars($d['user']); ?>
+            </option>
+        <?php endwhile; ?>
+    </select><br><br>
+
+    <label>Date:</label><br>
+    <input type="date" name="date" required><br><br>
+
+    <label>Time:</label><br>
+    <input type="time" name="time" required><br><br>
+
+    <button type="submit">Book</button>
+</form>
+
+</body>
+</html>
 EOF
 
 # ======================
@@ -652,16 +691,16 @@ EOF
 # ======================
 cat > my_appointments.php <<"EOF"
 <?php
-require 'config.php';
+require 'config.php'; #prisijungiam prie duombases
 
-if (empty($_SESSION["id"])) {
+if (empty($_SESSION["id"])) {  #ar prisijunges vartotojas
     header("Location: login.php");
     exit;
 }
 
-$patient_id = $_SESSION["id"];
+$patient_id = $_SESSION["id"];  # issaugom paciento id kad parodyt vizita 
 
-// fetch appointments
+// fetch appointments   #parodo visus paciento visitus 
 $sql = "
     SELECT a.id, a.date, a.time, d.user AS doctor_user
     FROM appointments a
@@ -683,21 +722,21 @@ $res = mysqli_query($conn, $sql);
     <a href="index.php">Back to user home</a>
 </p>
 
-<?php if ($res && mysqli_num_rows($res) > 0): ?>
+<?php if ($res && mysqli_num_rows($res) > 0): ?>        #jei egzistuoja bent 1 vizitas rodo lentele su vizitais
     <table border="1" cellpadding="5">
         <tr>
             <th>Doctor</th>
             <th>Date</th>
             <th>Time</th>
-            <th>Action (check-out)</th>
+            <th>Action (check-out)</th>        
         </tr>
-        <?php while ($row = mysqli_fetch_assoc($res)): ?>
+        <?php while ($row = mysqli_fetch_assoc($res)): ?>    
         <tr>
             <td><?php echo htmlspecialchars($row['doctor_user']); ?></td>
             <td><?php echo htmlspecialchars($row['date']); ?></td>
             <td><?php echo htmlspecialchars($row['time']); ?></td>
             <td>
-                <form method="post" action="cancel_appointment.php" style="display:inline;">
+                <form method="post" action="cancel_appointment.php" style="display:inline;"> #cia taipat yra mygtukas cancel atsaukti bet jis issiunciamas i kita faila?
                     <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
                     <button type="submit">Cancel</button>
                 </form>
@@ -716,7 +755,7 @@ EOF
 # ======================
 # cancel_appointment.php – PATIENT: cancel (check-out)
 # ======================
-cat > cancel_appointment.php <<"EOF"
+cat > cancel_appointment.php <<"EOF"  #IS PRAEITO FAILO PASPAUDUS CANCEL AND APPOINTMENTO CIA BASICALLY FUNKCIONALUMAS TO CANCEL BUTTON
 <?php
 require 'config.php';
 
@@ -727,10 +766,10 @@ if (empty($_SESSION["id"])) {
 
 $patient_id = $_SESSION["id"];
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id = (int)($_POST['id'] ?? 0);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {    #ar paspaude cancel buttona
+    $id = (int)($_POST['id'] ?? 0);    #laiko vizito id jei jo nera 0
 
-    if ($id > 0) {
+    if ($id > 0) {    #jei yra visito nr istrinamas jis is appointment database ir mus grazina i my_appointmentus
         // paprastas delete, be sql injection apsaugos
         mysqli_query($conn, "DELETE FROM appointments 
                              WHERE id = $id AND patient_id = $patient_id");
@@ -752,47 +791,56 @@ FROM ubuntu:24.04
 
 RUN apt update && apt install -y nginx
 
-RUN rm -rf /etc/nginx/sites-enabled/default
+RUN rm -rf /etc/nginx/sites-enabled/default    #istrinam default configuracija
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY app/ /var/www/html/
+COPY nginx.conf /etc/nginx/conf.d/default.conf #nukopijuojame musu sukurta konfiguracija i ta direktorija 
+COPY app/ /var/www/html/    nukopijuojame visus app/ failus i /var/www/html 
 
-EXPOSE 80
+EXPOSE 80   #paviesintas 80 portui
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["nginx", "-g", "daemon off;"] #paleidzia nginx serveri ir (-g daemon off) kad nebutu ant background paleidziamas o ant foregroundo
+roundo paleidziamas o kaip main
 DOC
 
 # PHP DOCKERFILE
 cat > php.Dockerfile <<"EOF"
 FROM ubuntu:24.04
-RUN apt update && apt install -y \
+RUN apt update && apt install -y \  #instaliuoja ka reikia 
     php-fpm \
     php-mysql \
     php-cli \
     php-common \
     mariadb-client
-WORKDIR /var/www/html
-RUN sed -i 's|listen = /run/php/php8.3-fpm.sock|listen = 9000|' /etc/php/8.3/fpm/pool.d/www.conf
-RUN echo "clear_env = no" >> /etc/php/8.3/fpm/pool.d/www.conf
-EXPOSE 9000
-CMD ["/usr/sbin/php-fpm8.3", "-F"]
+WORKDIR /var/www/html    #nustato kur bus vykdomi failai 
+RUN sed -i 's|listen = /run/php/php8.3-fpm.sock|listen = 9000|' /etc/php/8.3/fpm/pool.d/www.conf #Pakeičia PHP-FPM, kad nebūtų Unix soketo, o klausytų TCP porto 9000.
+RUN echo "clear_env = no" >> /etc/php/8.3/fpm/pool.d/www.conf #PHP-FPM saugumo nustatymas, kad Docker aplinka pasiektų PHP skriptus.
+EXPOSE 9000  #paskleidzia visiems 9000 porta
+CMD ["/usr/sbin/php-fpm8.3", "-F"] #paleidžia PHP-FPM tame konteineryje, kad jis neužsidarytų ir veiktų visą laiką, kol konteineris gyvas. (-F reiskia veik foregrounde)
 EOF
 
 # NGINX CONFIG
 cat > nginx.conf <<"conf"
 server {
-    listen 80;
-    server_name _;
+    listen 80; #klausyk porto 80
+    server_name _;    #bet koks domain tinka
 
-    root /var/www/html;
-    index index.php index.html;
+    root /var/www/html;                    #Nurodo katalogą konteineryje, iš kurio Nginx turi ieškoti failų.
+                                                #Pvz., jei naršyklėje nueini į http://localhost/index.php, Nginx ieškos /var/www/html/index.php.
+    
+     index index.php index.html;               #Nurodo, kokį failą numatytai atidaryti, jei vartotojas nueina į katalogą be konkretaus failo.
+                                                #Pvz., naršyklė prašo / → Nginx pirmiausia ieško index.php, jei jo nėra – index.html.
 
     location / {
-        try_files $uri $uri/ =404;
+        try_files $uri $uri/ =404;         #Jei failas ar katalogas neegzistuoja → vartotojui parodoma klaida 404.
     }
 
+
+#Šis blokas nukreipia visas PHP užklausas į PHP-FPM konteinerį.
+#Nginx nevykdo PHP pats – jis perduoda PHP-FPM per TCP portą (9000).
+#PHP-FPM vykdo skriptą ir grąžina rezultatą atgal Nginx, kuris pateikia naršyklei.
+
     location ~ \.php$ {
-        fastcgi_pass app:9000;
+        fastcgi_pass app:9000;                                
         fastcgi_index index.php;
         include fastcgi_params;
         fastcgi_param SCRIPT_FILENAME /var/www/html$fastcgi_script_name;
@@ -811,14 +859,14 @@ services:
       dockerfile: php.Dockerfile
     container_name: hospital_php
     volumes:
-      - ./app:/var/www/html
-    environment:
-      DB_HOST: "${DB_HOST}"
+      - ./app:/var/www/html    #visi failai /app perduodami i /var/www/html
+    environment:        # tai kintamieji (variables) konteinerio aplinkoje, kuriuos PHP-FPM naudoja prisijungimui prie duomenų bazės.
+      DB_HOST: "${DB_HOST}"  #PHP skriptas jas gali pasiekti per getenv() arba $_ENV
       DB_PORT: "${DB_PORT}"
       DB_NAME: "${DB_NAME}"
       DB_USER: "${DB_USER}"
       DB_PASSWORD: "${DB_PASSWORD}"
-    restart: always
+    restart: always # jei uzluzta visados perkrauna
 
   web:
     build:
@@ -826,10 +874,10 @@ services:
       dockerfile: nginx.Dockerfile
     container_name: hospital_nginx
     ports:
-      - "80:80"
+      - "80:80" #Nginx konteineris aptarnauja HTTP užklausas (port 80),
     depends_on:
-      - app
+      - app #Nurodo, kad Nginx konteineris bus paleistas tik po PHP-FPM konteinerio (app).
     volumes:
-      - ./app:/var/www/html
+      - ./app:/var/www/html #Tavo lokalus katalogas ./app konteineryje atrodo kaip /var/www/html, Bet PHP ir Nginx konteineriai mato tuos failus ir gali juos naudoti.
     restart: always
 comp
