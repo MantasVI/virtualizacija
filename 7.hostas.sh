@@ -2,6 +2,7 @@
 
 cd /home/mavi1016/.ansible/
 
+<<<<<<< HEAD
 cat > host.yml << "BMW"
 
 - name: SUKURIU VISU HOST FILE SU JU PRIVATE IPS
@@ -14,6 +15,20 @@ cat > host.yml << "BMW"
         viliaus_private_ip: "{{ lookup('file', '/home/mavi1016/.ansible/viliaus_ip.txt') }}"
         nato_private_ip: "{{ lookup('file', '/home/mavi1016/.ansible/nato_ip.txt') }}"
 
+=======
+cat > host.yml << "BMW"    
+
+- name: SUKURIU VISU HOST FILE SU JU PRIVATE IPS 
+  hosts: localhost     
+  become: yes        
+  tasks:
+    - name: Read saved IPs
+      set_fact:   
+        arno_private_ip: "{{ lookup('file', '/home/mavi1016/.ansible/arno_ip.txt') }}"
+        viliaus_private_ip: "{{ lookup('file', '/home/mavi1016/.ansible/viliaus_ip.txt') }}"
+        nato_private_ip: "{{ lookup('file', '/home/mavi1016/.ansible/nato_ip.txt') }}"
+ 
+>>>>>>> 2833e5e (final working code)
     - name: Write Ansible hosts inventory file
       copy:
         dest: /home/mavi1016/.ansible/hosts

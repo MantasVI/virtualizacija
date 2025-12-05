@@ -5,16 +5,28 @@ cd /home/mavi1016/.ansible/webstack/app
 # ======================
 # config.php – HOSPITAL DB (VILIAUS)
 # ======================
+<<<<<<< HEAD
 cat > config.php <<"EOF"    # is a reusable database connection file.
 <?php
 session_start();    #session_start() – starts a session for the user, giving them a unique session ID. This session lets you store their user-specific data (like user_id) so they only see their own info.
 
 $host = getenv('DB_HOST');        // from .env (Viliaus private IP)          getenv() – reads the database credentials from environment variables (DB_HOST, DB_NAME, DB_USER, DB_PASSWORD). This avoids hardcoding passwords in your PHP code.      
+=======
+cat > config.php <<"EOF"    
+<?php
+session_start();   
+
+$host = getenv('DB_HOST');        // from .env (Viliaus private IP)          
+>>>>>>> 2833e5e (final working code)
 $db   = getenv('DB_NAME');        // hospital    
 $user = getenv('DB_USER');        // hospital_user
 $pass = getenv('DB_PASSWORD');    // hospital_pass
 
+<<<<<<< HEAD
 $conn = mysqli_connect($host, $user, $pass, $db);   $conn = mysqli_connect(...) – uses the above variables to connect to your MariaDB database. $conn is the connection handle used in queries.
+=======
+$conn = mysqli_connect($host, $user, $pass, $db);   
+>>>>>>> 2833e5e (final working code)
 
 if (!$conn) {
     die("could not connect to hospital database!");
@@ -28,12 +40,21 @@ EOF
 cat > index.php <<"EOF"
 <?php
 require 'config.php';   
+<<<<<<< HEAD
 if (!empty($_SESSION["id"])) {    #Patikrina sesiją: if (!empty($_SESSION["id"])) → ar vartotojas yra prisijungęs.
     $id = $_SESSION["id"];                #Gautų duomenų paieška: Jei prisijungęs, iš duomenų bazės paima visą eilutę iš users lentelės pagal $id.
     $result = mysqli_query($conn, "SELECT * FROM users WHERE id = $id");
     $row = mysqli_fetch_assoc($result);    #Asociatyvus masyvas: mysqli_fetch_assoc($result) paverčia eilutę į asociatyvų masyvą, kad galėtum naudoti $row["user"], $row["password"] ir t.t.
 } else {
     header("Location: login.php");    #nera id reiskia logginink
+=======
+if (!empty($_SESSION["id"])) {   
+    $id = $_SESSION["id"];               
+    $result = mysqli_query($conn, "SELECT * FROM users WHERE id = $id");
+    $row = mysqli_fetch_assoc($result);    
+} else {
+    header("Location: login.php");    
+>>>>>>> 2833e5e (final working code)
     exit;
 }
 ?>
@@ -44,8 +65,12 @@ if (!empty($_SESSION["id"])) {    #Patikrina sesiją: if (!empty($_SESSION["id"]
     <title>User Home</title>
 </head>
 <body>
+<<<<<<< HEAD
     <h1>Welcome <?php echo htmlspecialchars($row["user"]); ?></h1>        #turi id imeta tave i userio page
 
+=======
+    <h1>Welcome <?php echo htmlspecialchars($row["user"]); ?></h1>        
+>>>>>>> 2833e5e (final working code)
     <p>
         <a href="logout.php">LOGOUT</a>
     </p>
@@ -77,6 +102,7 @@ cat > login.php <<"EOF"
 <?php
 require 'config.php';
 
+<<<<<<< HEAD
 if (isset($_POST["username"])) {        #ar uzpildytas ir username ir password ? 
     $username = $_POST["username"];
     $password = $_POST["password"];
@@ -86,16 +112,33 @@ if (isset($_POST["username"])) {        #ar uzpildytas ir username ir password ?
 
     if (mysqli_num_rows($result) > 0) {         # ar egzistuoja database? jei taip tikrina ar ivestas passwordas atitinka database passworda jei atitinka ($_session[id] = userio id stores the user’s unique ID in the session so other pages know which user is logged in.) ir nukreipia i  index.php kuris yra tsg user page
         // PLAIN TEXT PASSWORD CHECK – EXACTLY LIKE YOUR ORIGINAL
+=======
+if (isset($_POST["username"])) {       
+    $username = $_POST["username"];
+    $password = $_POST["password"];
+
+    $result = mysqli_query($conn, "SELECT * FROM users WHERE user = '$username'");   
+    $row    = mysqli_fetch_assoc($result);    
+
+    if (mysqli_num_rows($result) > 0) {         
+>>>>>>> 2833e5e (final working code)
         if ($password == $row["password"]) {
             $_SESSION["login"] = true;
             $_SESSION["id"]  = $row["id"]; 
             header("Location: index.php");
             exit;
         } else {
+<<<<<<< HEAD
             echo "wrong password"; # jei slaptazodis nesutampa 
         }
     } else {
         echo "not registered"; # jeigu mysqli_num_rows($result) = 0 aka vps nera tokio userio database
+=======
+            echo "wrong password"; 
+        }
+    } else {
+        echo "not registered"; 
+>>>>>>> 2833e5e (final working code)
     }
 }
 ?>
@@ -132,10 +175,17 @@ EOF
 cat > logout.php <<"EOF"
 <?php
 require 'config.php';
+<<<<<<< HEAD
 $_SESSION = [];    #Empties the session array ($_SESSION = []) → no stored data left.
 session_unset();   #frees session memory
 session_destroy();  #deletes session 
 header("Location: login.php"); #relocates the user to the login page
+=======
+$_SESSION = [];    
+session_unset();   
+session_destroy();   
+header("Location: login.php"); 
+>>>>>>> 2833e5e (final working code)
 exit;
 ?>
 EOF
@@ -145,14 +195,21 @@ EOF
 # ======================
 cat > registration.php <<"EOF"
 <?php
+<<<<<<< HEAD
 require 'config.php'; #loads the database connection
 
 if (!empty($_SESSION["id"])) {        #ar sessijos id tuscias? jei ne tai reiskias useris prisijunges ir ji grazinam i user page 
+=======
+require 'config.php'; 
+
+if (!empty($_SESSION["id"])) {         
+>>>>>>> 2833e5e (final working code)
     header("Location: index.php");
     exit;
 }
 
 if (isset($_POST["submit"])) {
+<<<<<<< HEAD
     $username  = $_POST["username"]; #ka irase i username lentele
     $password  = $_POST["password"];  #ka irase i password lentele
 
@@ -164,6 +221,19 @@ if (isset($_POST["submit"])) {
             // PLAIN TEXT – EXACTLY LIKE YOUR ORIGINAL
             $query = "INSERT INTO users (user, password) VALUES ('$username', '$password')";
             mysqli_query($conn, $query); #issiunciu sukurta insert query i database.
+=======
+    $username  = $_POST["username"]; 
+    $password  = $_POST["password"];  
+
+    $duplicate = mysqli_query($conn, "SELECT * FROM users WHERE user = '$username'");  
+    if (mysqli_num_rows($duplicate) > 0) { 
+        echo "username taken";
+    } else { 
+        if (!empty($username) && !empty($password)) { 
+            
+            $query = "INSERT INTO users (user, password) VALUES ('$username', '$password')";
+            mysqli_query($conn, $query); 
+>>>>>>> 2833e5e (final working code)
             echo "registration successful";
         } else {
             echo "registration failed";
@@ -181,10 +251,17 @@ if (isset($_POST["submit"])) {
     <form action="<?php $_SERVER["PHP_SELF"] ?>" method="post">
         <h2>Welcome to the Linux hospital – User registration</h2>
         username:<br>
+<<<<<<< HEAD
         <input type="text" name="username"><br>  #$username = # $_POST[username] is cia kyla
         password:<br>
         <input type="password" name="password"><br>    #$password = # $_POST[password] is cia kyla
         <input type="submit" name="submit" value="register"><br>     #isset(submit) is cia
+=======
+        <input type="text" name="username"><br> 
+        password:<br>
+        <input type="password" name="password"><br>    
+        <input type="submit" name="submit" value="register"><br>     
+>>>>>>> 2833e5e (final working code)
         <a href="login.php">User login</a><br>
         <a href="doctor_login.php">Doctor login</a> |
         <a href="doctor_registration.php">Doctor registration</a>
@@ -198,6 +275,7 @@ EOF
 # ======================
 cat > doctor_login.php <<"EOF"
 <?php
+<<<<<<< HEAD
 require 'config.php'; #reikalingas database 
 
 if (isset($_POST["username"])) {  #cia legit same shit kaip submit 
@@ -214,6 +292,24 @@ if (isset($_POST["username"])) {  #cia legit same shit kaip submit
             $_SESSION["doctor_id"]    = $row["id"];  #leidzia identifikuoti koks doctor prisijunges nes kiekvienas useris ir doctor turi skirtinga id
             $_SESSION["doctor_user"]  = $row["user"]; #cia tai tsg displaying varda daktaro kinda useless
             header("Location: doctor_index.php"); #nusiuncia daktara i doctor page
+=======
+require 'config.php'; 
+
+if (isset($_POST["username"])) {  
+    $username = $_POST["username"];   
+    $password = $_POST["password"];    
+
+    $result = mysqli_query($conn, "SELECT * FROM doctors WHERE user = '$username'");  
+    $row    = mysqli_fetch_assoc($result); 
+
+    if (mysqli_num_rows($result) > 0) {   
+        // PLAIN TEXT
+        if ($password == $row["password"]) {
+            $_SESSION["doctor_login"] = true; 
+            $_SESSION["doctor_id"]    = $row["id"];  
+            $_SESSION["doctor_user"]  = $row["user"];
+            header("Location: doctor_index.php"); 
+>>>>>>> 2833e5e (final working code)
             exit;
         } else {
             echo "wrong password";
@@ -253,7 +349,11 @@ EOF
 # ======================
 # doctor_registration.php – create doctor in hospital.doctors
 # ======================
+<<<<<<< HEAD
 cat > doctor_registration.php <<"EOF"  # 1 : 1 kaip useriams registracija
+=======
+cat > doctor_registration.php <<"EOF"  
+>>>>>>> 2833e5e (final working code)
 <?php
 require 'config.php';
 
@@ -309,6 +409,7 @@ EOF
 cat > doctor_index.php <<"EOF"
 <?php
 require 'config.php';
+<<<<<<< HEAD
 if (empty($_SESSION["doctor_id"])) {  # ar gydytojas prisijunges ? jei ne tai nukreipia ji i doctor logina
     header("Location: doctor_login.php");
     exit;
@@ -318,13 +419,27 @@ $doctor_name = isset($_SESSION["doctor_user"]) ? $_SESSION["doctor_user"] : "Doc
 
 // fetch appointments for this doctor
 $app_sql = "                                    # cai tsg is user lenteles istraukia varda data laika kada turi appointmenta [mantas 25-01-01 18.30]
+=======
+if (empty($_SESSION["doctor_id"])) {  
+    header("Location: doctor_login.php");
+    exit;
+}
+$doctor_id   = $_SESSION["doctor_id"];
+$doctor_name = isset($_SESSION["doctor_user"]) ? $_SESSION["doctor_user"] : "Doctor"; 
+// fetch appointments for this doctor
+$app_sql = "                                    
+>>>>>>> 2833e5e (final working code)
     SELECT a.id, a.date, a.time, u.user AS patient_user 
     FROM appointments a
     JOIN users u ON a.patient_id = u.id
     WHERE a.doctor_id = $doctor_id
     ORDER BY a.date, a.time
 ";
+<<<<<<< HEAD
 $app_res = mysqli_query($conn, $app_sql); # ta querry issiuncia i database $conn
+=======
+$app_res = mysqli_query($conn, $app_sql); 
+>>>>>>> 2833e5e (final working code)
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -341,7 +456,11 @@ $app_res = mysqli_query($conn, $app_sql); # ta querry issiuncia i database $conn
     <hr>
 
     <h3>My appointments</h3>
+<<<<<<< HEAD
     <?php if ($app_res && mysqli_num_rows($app_res) > 0): ?>  # AR YRA BENT 1 SUSITIKIMAS RODYTU SU KUO KITAIP NO APPINTMENTS
+=======
+    <?php if ($app_res && mysqli_num_rows($app_res) > 0): ?>  
+>>>>>>> 2833e5e (final working code)
         <table border="1" cellpadding="5">
             <tr>
                 <th>Date</th>
@@ -350,7 +469,11 @@ $app_res = mysqli_query($conn, $app_sql); # ta querry issiuncia i database $conn
             </tr>
             <?php while ($r = mysqli_fetch_assoc($app_res)): ?>
                 <tr>
+<<<<<<< HEAD
                     <td><?php echo htmlspecialchars($r['date']); ?></td>    #atprintima 1 userio data laika ir jo varda
+=======
+                    <td><?php echo htmlspecialchars($r['date']); ?></td>    
+>>>>>>> 2833e5e (final working code)
                     <td><?php echo htmlspecialchars($r['time']); ?></td>
                     <td><?php echo htmlspecialchars($r['patient_user']); ?></td>
                 </tr>
@@ -376,7 +499,11 @@ EOF
 # ======================
 # doctor_list.php – list doctors
 # ======================
+<<<<<<< HEAD
 cat > doctor_list.php <<"EOF"  # legit kai apsilankai atprintina visus daktarus. thats it.  
+=======
+cat > doctor_list.php <<"EOF"   
+>>>>>>> 2833e5e (final working code)
 <?php
 require 'config.php';
 
@@ -421,9 +548,15 @@ cat > doctor_search.php <<"EOF"
 <?php
 require 'config.php';
 
+<<<<<<< HEAD
 $q = trim($_GET['q'] ?? ""); #CIA YRA KA TU IRASAI IESKAI PVZ DAKTARO TAI VISAS TSA INPUT ISSAUGOMAS $q VARIABLE
 
 if ($q === "") {     #ar ka ivedei tuscia? jei tuscia nieko nerodo
+=======
+$q = trim($_GET['q'] ?? ""); 
+
+if ($q === "") {     
+>>>>>>> 2833e5e (final working code)
     $result = false;
 } else {
     $sql = "SELECT * FROM doctors WHERE user LIKE '%$qEsc%'"; # cia krc is database ismeta visus doctors JEI kas panasus i ka ivedei ( '%$qEsc%' ) 
@@ -448,15 +581,25 @@ if ($q === "") {     #ar ka ivedei tuscia? jei tuscia nieko nerodo
     <a href="doctor_index.php">Doctor home</a>
 </p>
 
+<<<<<<< HEAD
 <?php if ($q !== ""): ?>    #tikrinam ar ka irasei nera tuscia jei nera
     <h3>Results:</h3>
     <?php if ($result && mysqli_num_rows($result) > 0): ?>    tikrinam ar ka ivedei yra database 
+=======
+<?php if ($q !== ""): ?>    
+    <h3>Results:</h3>
+    <?php if ($result && mysqli_num_rows($result) > 0): ?>    
+>>>>>>> 2833e5e (final working code)
         <table border="1" cellpadding="5">
             <tr>
                 <th>ID</th>
                 <th>Username</th>
             </tr>
+<<<<<<< HEAD
             <?php while ($row = mysqli_fetch_assoc($result)): ?> isprintina daktaro id ir username
+=======
+            <?php while ($row = mysqli_fetch_assoc($result)): ?> 
+>>>>>>> 2833e5e (final working code)
             <tr>
                 <td><?php echo $row['id']; ?></td>
                 <td><?php echo htmlspecialchars($row['user']); ?></td> 
@@ -479,7 +622,11 @@ cat > doctor_schedule.php <<"EOF"
 <?php
 require 'config.php';
 
+<<<<<<< HEAD
 if (empty($_SESSION["doctor_id"])) {         #ar yra prisijunges daktaras jei ne i login page jei taip tai tsg isprintina jo work hours 
+=======
+if (empty($_SESSION["doctor_id"])) {         
+>>>>>>> 2833e5e (final working code)
     header("Location: doctor_login.php");
     exit;
 }
@@ -518,19 +665,33 @@ EOF
 # ======================
 cat > patient_card.php <<"EOF"
 <?php
+<<<<<<< HEAD
 require 'config.php';    # prisijungiam database ir leidzia naudoti $_SESSION visur
 
 if (empty($_SESSION["id"])) {    # jei useris neprisijungęs, nukreipia į login puslapį.
+=======
+require 'config.php';    
+
+if (empty($_SESSION["id"])) {    
+>>>>>>> 2833e5e (final working code)
     header("Location: login.php");
     exit;
 }
 
+<<<<<<< HEAD
 $patient_id = $_SESSION["id"];    #išsaugome paciento ID, kad žinotume, kieno kortelė.
 
 // handle save
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {    #tikrina, ar buvo paspaustas “Save” mygtukas.
     $age = $_POST['age'] !== '' ? (int)$_POST['age'] : null;    #ar ivestas buvo ivesta kazkas jei ne lieka tuscia jei taip tai sukuriamas patient card su sitais values kuriuos ivedem
 
+=======
+$patient_id = $_SESSION["id"];    
+
+// handle save
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {    
+    $age = $_POST['age'] !== '' ? (int)$_POST['age'] : null;    
+>>>>>>> 2833e5e (final working code)
     // enforce age between 1 and 99
     if ($age !== null && ($age < 1)) {
         $age = null;
@@ -541,22 +702,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {    #tikrina, ar buvo paspaustas “
     $notes      = $_POST['notes'] ?? '';
 
   
+<<<<<<< HEAD
     $check = mysqli_query($conn, "SELECT patient_id FROM patient_card WHERE patient_id = $patient_id");  #ar turi patient card useris?
     if ($check && mysqli_num_rows($check) > 0) {   #patikrina ar dabartinis pacientas turi susikures pateint card jei turi tai mes ji tik paupdeitinam jie neturi sukuriam 
         // update
         $sql = "UPDATE patient_card SET age = $age, blood_type = '$blood_type', allergies = '$allergies', notes = '$notes' WHERE patient_id = $patient_id";
         mysqli_query($conn, $sql); #issiunciam i database
+=======
+    $check = mysqli_query($conn, "SELECT patient_id FROM patient_card WHERE patient_id = $patient_id");  
+    if ($check && mysqli_num_rows($check) > 0) {    
+        // update
+        $sql = "UPDATE patient_card SET age = $age, blood_type = '$blood_type', allergies = '$allergies', notes = '$notes' WHERE patient_id = $patient_id";
+        mysqli_query($conn, $sql); 
+>>>>>>> 2833e5e (final working code)
     } else {
         // insert
         $sql = "INSERT INTO patient_card (patient_id, age, blood_type, allergies, notes)
                 VALUES ($patient_id, $age, '$blood_type', '$allergies', '$notes')";
+<<<<<<< HEAD
         mysqli_query($conn, $sql);  #issiunciam i database
+=======
+        mysqli_query($conn, $sql);  
+>>>>>>> 2833e5e (final working code)
     }
 }
 
 // load card
+<<<<<<< HEAD
 $card_res = mysqli_query($conn, "SELECT * FROM patient_card WHERE patient_id = $patient_id"); #parodom patient card
 $card = $card_res && mysqli_num_rows($card_res) > 0 ? mysqli_fetch_assoc($card_res) : null; jei yra bent 1 toks pacientas tai parodom  jo patient card info 
+=======
+$card_res = mysqli_query($conn, "SELECT * FROM patient_card WHERE patient_id = $patient_id"); 
+$card = $card_res && mysqli_num_rows($card_res) > 0 ? mysqli_fetch_assoc($card_res) : null; 
+>>>>>>> 2833e5e (final working code)
 ?>
 <!DOCTYPE html>
 <html>
@@ -611,6 +789,7 @@ if (empty($_SESSION["id"])) {         # ar yra useris prisijunges?
 $patient_id = $_SESSION["id"];        # issaugom paciento id nes pagal tai zinosim kam appointmentas
 $message = "";
 
+<<<<<<< HEAD
 // gauti gydytojų sąrašą
 $doctors_res = mysqli_query($conn, "SELECT id, user FROM doctors ORDER BY user");    # gauname gydytoju sarasa
 
@@ -619,11 +798,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {    # jei doctor_id, date ir time bu
     $doctor_id = (int)$_POST['doctor_id'];
     $date      = $_POST['date'];
     $time      = $_POST['time'];
+=======
+$doctors_res = mysqli_query($conn, "SELECT id, user FROM doctors ORDER BY user");
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $doctor_id = (int)($_POST['doctor_id'] ?? 0);
+    $date      = $_POST['date'] ?? '';
+    $time      = $_POST['time'] ?? '';
+>>>>>>> 2833e5e (final working code)
 
     // ar visi laukeliai įvesti
     if ($doctor_id <= 0 || $date === '' || $time === '') {
         $message = "Užpildyk visus laukus.";
     } else {
+<<<<<<< HEAD
         // patikrinti ar daktaras turi appointment tuo metu
         $check = mysqli_query(
             $conn,
@@ -633,6 +821,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {    # jei doctor_id, date ir time bu
 
         if (mysqli_num_rows($check) > 0) {
             $message = "Gydytojas tuo metu jau užimtas.";
+=======
+        $sql = "INSERT INTO appointments (patient_id, doctor_id, date, time)
+                VALUES ($patient_id, $doctor_id, '$date', '$time')";
+        if (mysqli_query($conn, $sql)) {
+            $message = "Appointment booked.";
+>>>>>>> 2833e5e (final working code)
         } else {
             // įrašyti naują appointment
             mysqli_query(
@@ -664,7 +858,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {    # jei doctor_id, date ir time bu
     <select name="doctor_id" required>
         <option value="">-- choose doctor --</option>
         <?php
+<<<<<<< HEAD
        
+=======
+        $doctors_res = mysqli_query($conn, "SELECT id, user FROM doctors ORDER BY user");
+>>>>>>> 2833e5e (final working code)
         while ($d = mysqli_fetch_assoc($doctors_res)):
         ?>
             <option value="<?php echo $d['id']; ?>">
@@ -685,7 +883,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {    # jei doctor_id, date ir time bu
 </body>
 </html>
 EOF
-
 # ======================
 # my_appointments.php – PATIENT: view + check-out (cancel)
 # ======================
@@ -766,10 +963,17 @@ if (empty($_SESSION["id"])) {
 
 $patient_id = $_SESSION["id"];
 
+<<<<<<< HEAD
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {    #ar paspaude cancel buttona
     $id = (int)($_POST['id'] ?? 0);    #laiko vizito id jei jo nera 0
 
     if ($id > 0) {    #jei yra visito nr istrinamas jis is appointment database ir mus grazina i my_appointmentus
+=======
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id = (int)($_POST['id'] ?? 0);
+
+    if ($id > 0) {
+>>>>>>> 2833e5e (final working code)
         // paprastas delete, be sql injection apsaugos
         mysqli_query($conn, "DELETE FROM appointments 
                              WHERE id = $id AND patient_id = $patient_id");
@@ -781,7 +985,7 @@ exit;
 EOF
 
 # ======================
-# Docker + Nginx/PHP (unchanged, still works with .env from 8.dockeris.sh)
+# Docker + Nginx/PHP 
 # ======================
 cd /home/mavi1016/.ansible/webstack
 
@@ -848,7 +1052,7 @@ server {
 }
 conf
 
-# DOCKER-COMPOSE (env vars from .env written by 8.dockeris.sh)
+# DOCKER-COMPOSE 
 cat > docker-compose.yml <<"comp"
 version: "3.9"
 

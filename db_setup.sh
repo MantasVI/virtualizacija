@@ -6,12 +6,10 @@ cd /home/mavi1016/.ansible/dbstack
 #PRADEKIT NUO my.cnf ir init.sql POTO I DOCKERFILE ZIUREKIT
 
 cat > Dockerfile <<"DOC"
-# dbstack/Dockerfile – MariaDB for HOSPITAL
 FROM mariadb:10.11
 COPY my.cnf /etc/mysql/my.cnf    musu my.cnf (KONFIGURACIJOS FAILUS KURIS NUSTATO KAIP MARIADB VEIKS)
 COPY init.sql /docker-entrypoint-initdb.d/   (tiesiog instrukcijos MariaDB, ką sukurti startuojant konteinerį.)
 EXPOSE 3306
-# Default ENTRYPOINT from image starts mysqld
 DOC
 
 cat > my.cnf <<"DAT"
@@ -34,7 +32,10 @@ CREATE DATABASE IF NOT EXISTS hospital;
 CREATE USER IF NOT EXISTS 'hospital_user'@'%' IDENTIFIED BY 'hospital_pass';        #MariaDB vartotojas, kurį PHP naudos prisijungti prie DB
 GRANT ALL PRIVILEGES ON hospital.* TO 'hospital_user'@'%'                        
 
+<<<<<<< HEAD
 FLUSH PRIVILEGES;        #atnaujink privilegijas
+=======
+>>>>>>> 2833e5e (final working code)
 
 USE hospital;            #naudok dbr sita database
 

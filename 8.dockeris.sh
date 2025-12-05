@@ -52,7 +52,10 @@ cat > docker.yml << "DOC"
         state: latest
         update_cache: yes
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2833e5e (final working code)
 # ===============================================================
 # CLIENT VM – GUI + XRDP + Firefox + Auto-session Fix
 # ===============================================================
@@ -102,7 +105,7 @@ cat > docker.yml << "DOC"
         name:
           - lxde
           - xrdp
-          - firefox # correct package for Debian 12
+          - firefox 
         state: present
         update_cache: yes
 
