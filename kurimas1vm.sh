@@ -21,7 +21,7 @@ else
 
 ssh-add  
 CUSER=mavi1016
-CPASS=Kietasislapas1
+CPASS=asdghakkzug123
 CENDPOINT=https://grid5.mif.vu.lt/cloud3/RPC2   
 template="ansible_rimtas"
 VMname="ansiblas"
